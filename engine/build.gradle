@@ -1,0 +1,71 @@
+plugins {
+    id 'java'
+}
+
+group 'gdx.salient'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://s01.oss.sonatype.org' }
+    mavenLocal()
+    google()
+    gradlePluginPortal()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://jitpack.io' }
+
+}
+
+sourceSets {
+    main {
+        java{
+            srcDirs = ['src']
+        }
+
+
+    }
+}
+
+dependencies {
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    implementation "com.crashinvaders.lml:gdx-autumn-fcs:$lmlVersion"
+    implementation "com.github.crykn.guacamole:gdx-desktop:$guacamoleVersion"
+    implementation 'com.google.code.gson:gson:2.10'
+    implementation 'com.github.ykrasik:jaci-libgdx-cli:0.4.0'
+    implementation 'com.github.tommyettinger:make_some_noise:0.4'
+    implementation 'com.badlogicgames.ashley:ashley:1.7.4'
+    implementation 'com.badlogicgames.gdx:gdx-ai:1.8.2'
+    implementation 'games.spooky.gdx:gdx-gfx:1.0.0'
+    implementation 'com.strongjoshua:libgdx-inGameConsole:1.0.0'
+    implementation "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+    implementation "com.crashinvaders.lml:gdx-autumn:$lmlVersion"
+    implementation "com.crashinvaders.lml:gdx-kiwi:$lmlVersion"
+    implementation "com.crashinvaders.vfx:gdx-vfx-core:$gdxVfxCoreVersion"
+    implementation "com.crashinvaders.vfx:gdx-vfx-effects:$gdxVfxEffectsVersion"
+    implementation "com.esotericsoftware:kryo:$kryoVersion"
+    implementation "com.github.crykn.guacamole:core:$guacamoleVersion"
+    implementation "com.github.crykn.guacamole:gdx:$guacamoleVersion"
+    implementation "com.github.czyzby:noise4j:$noise4jVersion"
+    implementation "com.github.fxgaming:gdx-psx:$gdxPsxVersion"
+    implementation "com.github.mgsx-dev.gdx-gltf:gltf:$gdxGltfVersion"
+    implementation "com.github.tommyettinger:anim8-gdx:$anim8Version"
+    implementation "com.github.tommyettinger:digital:$digitalVersion"
+    implementation "com.github.tommyettinger:funderby:$funderbyVersion"
+    implementation "com.github.tommyettinger:juniper:$juniperVersion"
+    implementation "com.github.tommyettinger:libgdx-utils:$utilsVersion"
+    implementation "com.github.tommyettinger:regexodus:$regExodusVersion"
+    implementation "com.kotcrab.vis:vis-ui:$visUiVersion"
+    implementation "com.squidpony:squidlib-extra:$squidlibExtraVersion"
+    implementation "com.squidpony:squidlib-util:$squidlibUtilVersion"
+    implementation "com.squidpony:squidlib:$squidlibVersion"
+    implementation "com.sudoplay.joise:joise:$joiseVersion"
+    implementation "com.crashinvaders.lml:gdx-autumn-mvc:$lmlVersion"
+    implementation "com.crashinvaders.lml:gdx-autumn:$lmlVersion"
+
+    implementation "com.github.lyze237:gdx-FlexBox:425149b588"
+
+}
