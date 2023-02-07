@@ -71,7 +71,6 @@ public class OutlineRenderer implements Renderer
         sceneManager = new SceneManager(new PBRShaderProvider(config) , depthShaderProvider);
         sceneManager.setCamera(Context.getInstance().camera);
 
-        //RenderWidget.getInstance().addRenderer(this);
     }
 
 

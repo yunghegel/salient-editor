@@ -89,11 +89,11 @@ public class BulletPhysicsSystem extends IteratingSystem
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.MIDDLE)) {
-            //            EntityFactory.addCrateEntity();
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
+            doPhysicsRayCast();
 
         }
-        bulletWorld.update(deltaTime);
+       // bulletWorld.update(deltaTime);
 
         //        if (debugDraw) {
         //            bulletWorld.render(RenderWidget.cam);
@@ -119,9 +119,8 @@ public class BulletPhysicsSystem extends IteratingSystem
             }
 
         }
-        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+        if (Gdx.input.isButtonPressed(Input.Buttons.MIDDLE)) {
 
-            // doPhysicsRayCast(sceneComponent);
         }
     }
 
@@ -147,7 +146,7 @@ public class BulletPhysicsSystem extends IteratingSystem
         ModelInstance modelInstance = sceneComponent.scene.modelInstance;
         btCollisionShape shape = BulletUtils.createTriangleMeshShape(modelInstance.model);
 
-        float mass = 1f;
+        float mass = 10f;
         shape.setLocalScaling(modelInstance.transform.getScale(new Vector3()));
         shape.calculateLocalInertia(mass , bulletComponent.inertia);
 
@@ -161,6 +160,7 @@ public class BulletPhysicsSystem extends IteratingSystem
 
         dynamicBodies.add(body);
         bulletWorld.addBody(body);
+        bulletWorld.setToDbvt();
 
     }
 
@@ -204,7 +204,7 @@ public class BulletPhysicsSystem extends IteratingSystem
         bulletWorld.setGravity(new Vector3(0 , -gravity , 0));
     }
 
-    public void doPhysicsRayCast(SceneComponent sceneComponent) {
+    public void doPhysicsRayCast() {
         Ray ray = SceneSystem.ray;
         rayFrom.set(ray.origin);
         rayTo.set(ray.direction).scl(100f).add(ray.origin).sub(Gdx.input.getX() , Gdx.input.getY() , 0);
@@ -213,8 +213,8 @@ public class BulletPhysicsSystem extends IteratingSystem
         if (rayCallback.hasHit()) {
             sys.Log.info("PhysicsSystem" , "Raycast hit!");
             btRigidBody body = (btRigidBody) rayCallback.getCollisionObject();
-            body.setLinearVelocity(new Vector3(0 , 0 , 0));
-            sceneComponent.selected = true;
+            //body.setLinearVelocity(new Vector3(0 , 0 , 0));
+            body.applyCentralImpulse(new Vector3(0 , 1 , 0));
         }
     }
 

@@ -76,7 +76,7 @@ public class SceneEntityFactory
         sceneComponent.create(model);
         sceneComponent.update();
         sceneComponent.populateArrays();
-        sceneComponent.model.transform.setTranslation(MiscUtils.getRandomVector3(-10f , 10f));
+
 
         core.components.TransformComponent transformComponent = new core.components.TransformComponent();
         transformComponent.transform = sceneComponent.model.transform;
@@ -84,7 +84,8 @@ public class SceneEntityFactory
         Entity entity = new Entity();
         entity.add(sceneComponent);
         entity.add(transformComponent);
-
+        sceneComponent.translate(MiscUtils.getRandomVector3(-20f , 20f));
+        sceneComponent.rotate(MiscUtils.getRandomVector3(-20f , 20f));
         Log.info("EntityFactory" , "Created SceneEntity from ModelInstance with ID " + id);
         ObjectRegistry.addSceneComponent(sceneComponent);
         return entity;

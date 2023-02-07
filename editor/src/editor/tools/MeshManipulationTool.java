@@ -9,32 +9,29 @@ import java.nio.FloatBuffer;
 
 public class MeshManipulationTool implements Tool<Mesh>
 {
+
     private Mesh mesh;
     private Mesh targetMesh;
     private MeshManipulationTool.MeshManipulator meshManipulator;
-    
-    
-    public MeshManipulationTool(Mesh mesh)
-    {
+
+    public MeshManipulationTool(Mesh mesh) {
         this.mesh = mesh;
         setSelection(mesh);
         meshManipulator = new MeshManipulator(mesh);
     }
-    
-    public MeshManipulationTool(){
-        
+
+    public MeshManipulationTool() {
+
     }
-    
-    
 
     @Override
     public void update() {
-        
+
     }
 
     @Override
     public void setSelection(Mesh selection) {
-        this.targetMesh= selection;
+        this.targetMesh = selection;
     }
 
     @Override
@@ -47,7 +44,9 @@ public class MeshManipulationTool implements Tool<Mesh>
 
     }
 
-    static class MeshManipulator {
+    static class MeshManipulator
+    {
+
         Mesh targetMesh;
         int lastFloat;
         int vertextFloats;
@@ -55,13 +54,13 @@ public class MeshManipulationTool implements Tool<Mesh>
         VertexAttribute norAttr;
         FloatBuffer buf;
 
-        public MeshManipulator(Mesh mesh){
+        public MeshManipulator(Mesh mesh) {
             this.targetMesh = mesh;
-            Log.info("MeshManipulator", "MeshManipulator created for a target mesh");
+            Log.info("MeshManipulator" , "MeshManipulator created for a target mesh");
             load();
         }
 
-        public void load(){
+        public void load() {
             buf = targetMesh.getVerticesBuffer();
             lastFloat = targetMesh.getNumVertices() * targetMesh.getVertexSize() / 4;
             vertextFloats = ( targetMesh.getVertexSize() / 4 );
@@ -71,6 +70,7 @@ public class MeshManipulationTool implements Tool<Mesh>
                 throw new IllegalArgumentException("Position/normal vertex attribute not found");
             }
         }
+
     }
 
 }

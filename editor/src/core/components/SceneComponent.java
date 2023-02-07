@@ -13,12 +13,14 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.Animation;
 import com.badlogic.gdx.graphics.g3d.model.Node;
+import com.badlogic.gdx.graphics.g3d.model.NodePart;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import editor.graphics.scene.GameObject;
+import editor.graphics.scene.MeshInfo;
 import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
@@ -44,27 +46,37 @@ public class SceneComponent extends GameObject implements Component
     public SceneModel sceneModel;
     public SceneAsset sceneAsset;
     public Array<Mesh> meshes = new Array<Mesh>();
+    public Array<MeshInfo> meshInfos = new Array<MeshInfo>();
     public Array<Material> materials = new Array<Material>();
     public Array<Node> nodes = new Array<Node>();
     public Array<Animation> animations = new Array<Animation>();
     public Matrix4 transform = new Matrix4();
+    public Quaternion quaternion = new Quaternion();
     public Vector3 center = new Vector3();
     public boolean selected = false;
     public boolean parsed = false;
     public boolean hovered = false;
+    public boolean initialized = false;
     public boolean arraysPopulated = false;
     public boolean boundingBoxVisible = false;
     public boolean pickable = true;
+    public boolean visible = true;
     public String path;
     public String id;
     private Matrix4 tmp = new Matrix4();
-    private Vector3 position;
-    private Vector3 rotation;
-    private Vector3 scale;
+    private Vector3 position = new Vector3();
+    private Vector3 rotation = new Vector3();
+    private Vector3 scale = new Vector3(1, 1, 1);
     private float[] vertices;
     private short[] indices;
     private Model outlinedModel;
     public ModelInstance outlinedModelInstance;
+
+    public boolean drawBounds = true;
+    public boolean drawWireframe = false;
+    public boolean drawPoints = false;
+    public boolean drawTextured = true;
+
 
     public SceneComponent(String id , String path) {
         ComponentRegistry.register(this);
@@ -75,11 +87,13 @@ public class SceneComponent extends GameObject implements Component
         this.id = id;
         this.name = id;
         this.path = path;
-
     }
 
     public SceneComponent(String id) {
         ComponentRegistry.register(this);
+        position = new Vector3();
+        rotation = new Vector3();
+        scale = new Vector3();
         this.id = id;
         this.path = "null";
     }
@@ -104,16 +118,18 @@ public class SceneComponent extends GameObject implements Component
         this.model = this.scene.modelInstance;
         this.model.calculateBoundingBox(boundingBox);
 
-
-
+        setToOrigin();
     }
 
     public void create(ModelInstance model) {
         this.model = model;
         this.mdl = model.model;
-        this.model.calculateBoundingBox(boundingBox);
-        this.scene = new Scene(mdl);
 
+
+        this.scene = new Scene(mdl);
+        this.model.calculateBoundingBox(boundingBox);
+
+        setToOrigin();
 //        ModelUtils.createOutlineModel(mdl , Color.WHITE, .5f);
 //        ModelUtils.createAlphaAttribute(mdl,.5f);
 //        outlinedModelInstance = new ModelInstance(outlinedModel);
@@ -142,7 +158,29 @@ public class SceneComponent extends GameObject implements Component
             loadNodes();
             loadAnimations();
             arraysPopulated = true;
+            traverseModel(mdl);
+            //traverseNodes(mdl);
         }
+    }
+
+    public void traverseModel(Model model) {
+        for (Mesh mesh: model.meshes) {
+            MeshInfo meshInfo = new MeshInfo(mesh);
+            meshInfo.setModel(this.model);
+            meshInfos.add(meshInfo);
+
+        }
+        Log.info("SceneComponent" , "Traversed model with id: " + id);
+    }
+
+    public void traverseNodes(Model model){
+        for (Node node: model.nodes) {
+            for (NodePart nodePart: node.parts) {
+                MeshInfo meshInfo = new MeshInfo(this.model, node, nodePart);
+
+
+            }
+     }
     }
 
     public void loadMeshes() {
@@ -179,7 +217,12 @@ public class SceneComponent extends GameObject implements Component
 
     private void ensureDataBind() {
         if (model != null) model = scene.modelInstance;
+        if (scene!= null) {
+        scene.modelInstance = model;
         transform = scene.modelInstance.transform;
+        }
+
+
     }
 
     public void calculateIndicesAndVertices() {
@@ -221,15 +264,72 @@ public class SceneComponent extends GameObject implements Component
         updateModelTransform();
     }
 
+    public void translate(Vector3 translation) {
+        this.position.add(translation);
+        updateModelTransform();
+    }
+
     public void setPosition(float x , float y , float z) {
         setPosition(new Vector3(x , y , z));
     }
+
+    public void translate(float x , float y , float z) {
+        translate(new Vector3(x , y , z));
+    }
+
+    public void rotate90X() {
+        rotation.add(90 , 0 , 0);
+        updateModelTransform();
+    }
+    public void rotate90Y() {
+        rotation.add(0 , 90 , 0);
+        updateModelTransform();
+    }
+
+    public void rotate90Z() {
+        rotation.add(0 , 0 , 90);
+        updateModelTransform();
+    }
+
+    public void rotate(float x , float y , float z) {
+        rotation.add(x , y , z);
+        updateModelTransform();
+    }
+
+    public void rotate(Vector3 rotation) {
+        this.rotation.add(rotation);
+        updateModelTransform();
+    }
+
+    public void setToOrigin() {
+        position.set(0 , 0 , 0);
+        rotation.set(0 , 0 , 0);
+        scale.set(1 , 1 , 1);
+        updateModelTransform();
+    }
+
+    public void rotate(Quaternion quaternion){
+        this.quaternion.mulLeft(quaternion);
+        updateModelTransform();
+    }
+
+    public void setRotation(Quaternion quaternion){
+        this.quaternion.set(quaternion);
+        rotate(this.quaternion);
+        updateModelTransform();
+    }
+
+    public Quaternion getRotation(){
+        return quaternion;
+    }
+
+
 
     private void updateModelTransform() {
         ensureDataBind();
         if (model != null) {
             scene.modelInstance.transform.idt();
-            scene.modelInstance.transform.set(position , new Quaternion().setEulerAngles(rotation.x , rotation.y , rotation.z) , scale);
+            scene.modelInstance.transform.set(position , quaternion , scale);
             transform = scene.modelInstance.transform;
             //            else {
             //                model.transform.idt().scale(scale.x , scale.y , scale.z).mul(transform);
@@ -264,14 +364,19 @@ public class SceneComponent extends GameObject implements Component
         updateModelTransform();
     }
 
-    public Vector3 getRotation() {
+    public Vector3 getRotationXYZ() {
         return rotation;
     }
 
     public void setRotation(Vector3 rotation) {
         this.rotation = rotation;
+
         updateModelTransform();
     }
+
+
+
+
 
     public void setRotation(float x , float y , float z) {
         setRotation(new Vector3(x , y , z));
@@ -291,7 +396,7 @@ public class SceneComponent extends GameObject implements Component
     }
 
     public void setRY(float rotation) {
-        this.rotation.x = rotation;
+        this.rotation.y = rotation;
         updateModelTransform();
     }
 
@@ -300,7 +405,7 @@ public class SceneComponent extends GameObject implements Component
     }
 
     public void setRZ(float rotation) {
-        this.rotation.x = rotation;
+        this.rotation.z = rotation;
         updateModelTransform();
     }
 
@@ -320,17 +425,38 @@ public class SceneComponent extends GameObject implements Component
     public void createOutlineModel(){
         Array<Mesh> meshes = new Array<Mesh>();
         Array<Material> materials = new Array<Material>();
-
-
         outlinedModelInstance = scene.modelInstance.copy();
-
         ModelUtils.createOutlineModel(outlinedModelInstance.copy().model, new Color(1,1,1,.1f), .5f);
-
         ModelUtils.createAlphaAttribute(outlinedModelInstance.model,.5f);
+    }
 
-
-
-
+    public void togglePoints(){
+        drawPoints = !drawPoints;
+        drawTextured = false;
+        drawWireframe = false;
+        drawBounds = false;
+        Log.info("SceneComponent" , "Toggled points to: " + drawPoints);
+    }
+    public void toggleWireframe(){
+        drawWireframe = !drawWireframe;
+        drawTextured = false;
+        drawPoints = false;
+        drawBounds = false;
+        Log.info("SceneComponent" , "Toggled wireframe to: " + drawWireframe);
+    }
+    public void toggleTextured(){
+        drawTextured = !drawTextured;
+        drawWireframe = false;
+        drawPoints = false;
+        drawBounds = false;
+        Log.info("SceneComponent" , "Toggled textured to: " + drawTextured);
+    }
+    public void toggleBounds(){
+        drawBounds = !drawBounds;
+        drawTextured = false;
+        drawWireframe = false;
+        drawPoints = false;
+        Log.info("SceneComponent" , "Toggled bounds to: " + drawBounds);
     }
 
 }

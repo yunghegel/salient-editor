@@ -7,8 +7,10 @@ import backend.tools.Perf;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.utils.async.ThreadUtils;
 import editor.graphics.screens.MainScreen;
+
 
 import java.io.IOException;
 
@@ -25,7 +27,10 @@ public class EditorGame extends Game
     public boolean assetsLoaded = false;
     long ms = 0;
 
+
+
     public EditorGame(Natives natives) {
+
         this.natives = natives;
     }
 

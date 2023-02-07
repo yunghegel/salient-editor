@@ -107,10 +107,9 @@ public class EditorPerspectiveCameraController extends FirstPersonCameraControll
         float deltaY = -Gdx.input.getDeltaY() * degreesPerPixel;
         startX = screenX;
         startY = screenY;
-        if (Gdx.input.isButtonPressed(0)) return false;
 
-        if (Gdx.input.isButtonPressed(2)) {
-            Gdx.input.setCursorCatched(true);
+        if (Gdx.input.isButtonPressed(0)) {
+
             if (SceneSystem.selectedSceneComponent!=null)
             {
 //                SceneSystem.selectedSceneComponent.getPosition(target);
@@ -128,7 +127,7 @@ public class EditorPerspectiveCameraController extends FirstPersonCameraControll
             return true;
         }
 
-        if (Gdx.input.isButtonPressed(1)) {
+        if (Gdx.input.isButtonPressed(2)) {
 
             camera.direction.rotate(camera.up, deltaX);
             tmp.set(camera.direction).crs(camera.up).nor();
@@ -169,7 +168,7 @@ public class EditorPerspectiveCameraController extends FirstPersonCameraControll
 
         camera.update();
         last.set(screenX , screenY);
-        return true;
+        return false;
     }
 
     enum TransformMode

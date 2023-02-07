@@ -12,6 +12,8 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
@@ -32,6 +34,7 @@ import com.strongjoshua.console.Console;
 import com.strongjoshua.console.GUIConsole;
 import core.attributes.PhysicsAttributes;
 import core.components.BulletComponent;
+import core.components.SceneComponent;
 import core.entities.SceneEntityFactory;
 import core.systems.*;
 import editor.graphics.rendering.SceneRenderer;
@@ -44,14 +47,16 @@ import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
-import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
-import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
+import net.mgsx.gltf.scene3d.shaders.*;
 import core.phys.BulletWorld;
 import core.phys.MotionState;
+import net.mgsx.gltf.scene3d.utils.IBLBuilder;
+import org.lwjgl.opengl.GL40;
 import ui.UserInterface;
 import util.MiscUtils;
 import util.ModelUtils;
 import util.SceneUtils;
+import utils.BulletUtils;
 import utils.EnvironmentUtils;
 
 public class Context
@@ -59,6 +64,7 @@ public class Context
 
     static {
         Gdx.gl.glLineWidth(2);
+
         //Gdx.gl.glEnable(GL.GL_LINE_SMOOTH);
     }
 
@@ -142,16 +148,18 @@ public class Context
         config.numPointLights = 16;
         config.numSpotLights = 16;
 
+
         depthShaderProvider = new DepthShaderProvider();
+        DepthShader.Config cfg =PBRDepthShaderProvider.createDefaultConfig();
         depthShaderProvider.config.numBones = 128;
         depthShaderProvider.config.numDirectionalLights = 8;
         depthShaderProvider.config.numPointLights = 16;
         depthShaderProvider.config.numSpotLights = 12;
 
-        sceneManager = new SceneManager(new PBRShaderProvider(config) , depthShaderProvider);
+        sceneManager = new SceneManager(new PBRShaderProvider(config),depthShaderProvider);
 
         camera = new PerspectiveCamera(67 , Gdx.graphics.getWidth() , Gdx.graphics.getHeight());
-        camera.near = 1f;
+        camera.near = .1f;
         camera.far = 300;
         camera.update();
         camera.position.set(5f , 2.5f , 5f);
@@ -174,11 +182,11 @@ public class Context
         ModelInstance axes5 = ModelUtils.createGrid(5f , 0.5f);
         ModelInstance gridLines = ModelUtils.createAxisLines(0.8f);
         ModelInstance floor = ModelUtils.createFloor(25f , .1f , 25f);
-        sceneManager.getRenderableProviders().add(axes1 , axes2dot5 , axes5 , gridLines);
+        //sceneManager.getRenderableProviders().add(axes1 , axes2dot5 , axes5 , gridLines);
 
         Scene sceneFloor = new Scene(floor);
         sceneFloor.modelInstance.transform.setTranslation(0 , -10f , 0);
-        sceneManager.addScene(sceneFloor);
+        //sceneManager.addScene(sceneFloor);
         btCollisionShape floorShape = new btBoxShape(new Vector3(2000 / 2f , .1f / 2f , 2000 / 2f));
         MotionState floorMotionState = new MotionState(floor.transform);
         float mass = 0;
@@ -188,67 +196,75 @@ public class Context
         btRigidBody floorRigidBody = new btRigidBody(floorRigidBodyCI);
         bulletWorld.addBody(floorRigidBody);
 
-        int count = 3;
+        int count = 6;
 
         for (int i = 0; i < count; i++) {
-            Model model = util.ModelUtils.createSphere(MiscUtils.getRandomFloat(.5f , 2f));
+            Model model = util.ModelUtils.createSphere(MiscUtils.getRandomFloat(.5f , 4f));
             ModelInstance instance = new ModelInstance(model);
-            instance.transform.setToTranslation(MiscUtils.getRandomFloat(-10f , 10f) , MiscUtils.getRandomFloat(-10f , 10f) , MiscUtils.getRandomFloat(-10f , 10f));
+            instance.transform.setToTranslation(MiscUtils.getRandomFloat(-20f , 20f)  , MiscUtils.getRandomFloat(0 , 20f) , MiscUtils.getRandomFloat(-20f , 20f) );
 
             instances.add(instance);
         }
 
         for (int i = 0; i < count; i++) {
-            Model model = util.ModelUtils.createCube(MiscUtils.getRandomFloat(.5f , 2f));
+            Model model = util.ModelUtils.createCube(MiscUtils.getRandomFloat(.5f , 4f));
             ModelInstance instance = new ModelInstance(model);
-            instance.transform.setToTranslation(MiscUtils.getRandomFloat(-10f , 10f) , MiscUtils.getRandomFloat(-10f , 10f) , MiscUtils.getRandomFloat(-10f , 10f));
+            instance.transform.setToTranslation(MiscUtils.getRandomFloat(-20f , 20f)  , MiscUtils.getRandomFloat(0 , 20f) , MiscUtils.getRandomFloat(-20f , 20f) );
 
             instances.add(instance);
         }
 
+        for (int i=0;i<count;i++){
+            Model model = util.ModelUtils.createCone(MiscUtils.getRandomFloat(.5f , 4f),MiscUtils.getRandomFloat(.5f , 4f),MiscUtils.getRandomFloat(.5f , 4f));
+            ModelInstance instance = new ModelInstance(model);
+            instance.transform.setToTranslation(MiscUtils.getRandomFloat(-20f , 20f) , MiscUtils.getRandomFloat(0 , 20f) , MiscUtils.getRandomFloat(-20f , 20f) );
+
+            instances.add(instance);
+        }
+
+        for (int i=0;i<count;i++){
+            Model model = util.ModelUtils.createCapsule(MiscUtils.getRandomFloat(.5f , 4f),MiscUtils.getRandomFloat(.5f , 4f));
+            ModelInstance instance = new ModelInstance(model);
+            instance.transform.setToTranslation(MiscUtils.getRandomFloat(-20f , 20f) , MiscUtils.getRandomFloat(0 , 20f) , MiscUtils.getRandomFloat(-20f , 20f) );
+
+            instances.add(instance);
+        }
+
+        shadowLight = new DirectionalShadowLight(1024 , 1024 , 50 , 50 , .1f , 100f) {
+            @Override
+            public void begin() {
+                super.begin();
+                Gdx.gl.glClearColor(0, 0, 0, 0f);
+            }
+        };
+        shadowLight.direction.set(-.4f, -.4f, -.4f).nor();
+
+        sceneManager.environment.add((shadowLight).set(0.8f, 0.8f, 0.8f, -.4f, -.4f, -.4f));
+        shadowLight.intensity = 5f;
         light = new DirectionalLightEx();
-
-        light.color.set(Color.WHITE);
+        light.direction.set(-.4f, -.4f, -.4f).nor();
+        //light.color.set(Color.WHITE);
         sceneManager.environment.add(light);
-        //sceneManager.environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
 
-        shadowLight = new DirectionalShadowLight(512 , 512 , 100 , 100f , 1f , 100f);
 
-        shadowLight.direction.set(0 , -.5f , 1);
-        //shadowLight.setCenter(0,50,0);
-        shadowLight.color.set(Color.WHITE);
-        //sceneManager.environment.add((shadowLight).set(0.8f, 0.8f, 0.8f, -.4f, -.4f, -.4f));
-        EnvironmentUtils.setupCamera(camera , sceneManager);
-        EnvironmentUtils.setupLight(shadowLight , sceneManager);
-        EnvironmentUtils.setupIBL(sceneManager , shadowLight , skybox);
-        //sceneManager.environment.add((shadowLight));
-        sceneManager.environment.shadowMap = shadowLight;
-        //sceneManager.environment.add(light);
-        sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , 0.2f , 0.2f , 0.2f , 0.5f));
 
-        float near = 1f;
-        float far = 100f;
+
+
+
+        IBLBuilder iblBuilder = IBLBuilder.createOutdoor(light);
+        environmentCubemap = iblBuilder.buildEnvMap(1024);
+        diffuseCubemap = iblBuilder.buildIrradianceMap(256);
+        specularCubemap = iblBuilder.buildRadianceMap(10);
+        iblBuilder.dispose();
+
+        float near = .1f;
+        float far = 1000f;
         float exponent = 1f;
 
-        //shadowLight.direction.set(light.direction);
-
-        sceneManager.environment.set(new ColorAttribute(ColorAttribute.Fog , new Color(Color.valueOf("7f7f7f4d"))));
-        sceneManager.environment.set(new ColorAttribute(PBRColorAttribute.AmbientLight , 0.5f , 0.5f , 0.5f , 1f));
-        sceneManager.environment.set(new FogAttribute(FogAttribute.FogEquation).set(near , far , exponent));
-
-        //        IBLBuilder iblBuilder = IBLBuilder.createOutdoor(shadowLight);
-        //        environmentCubemap = iblBuilder.buildEnvMap(1024);
-        //        diffuseCubemap = iblBuilder.buildIrradianceMap(256);
-        //        specularCubemap = iblBuilder.buildRadianceMap(10);
-        //        iblBuilder.dispose();
-        //
-        //        brdfLUT = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
-
-        //        sceneManager.setAmbientLight(1f);
-        //        sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture , brdfLUT));
-        //        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
-        //        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
-
+        //sceneManager.environment.set(new ColorAttribute(ColorAttribute.Fog , new Color(Color.valueOf("7f7f7f4d"))));
+        //sceneManager.environment.set(new ColorAttribute(PBRColorAttribute.AmbientLight , 1.0f, 1f, 1f, 1f));
+        //sceneManager.environment.set(new FogAttribute(FogAttribute.FogEquation).set(0 , 0 , 0));
+       // sceneManager.environment.set(new ColorAttribute(PBRColorAttribute.createEmissive(Color.WHITE)));
         Cubemap customSkyboxCubemap = SceneUtils.createCubemapDirectionFormat("editor");
         skybox = new SceneSkybox(customSkyboxCubemap);
         sceneManager.setSkyBox(skybox);
@@ -262,6 +278,7 @@ public class Context
     public PlayerSystem playerSystem;
     public ObjectPickingSystem objectPickingSystem;
     public IntermediateRenderingSystem intermediateRenderingSystem;
+    public WireframeRenderSystem wireframeRenderSystem;
 
     private void createECS() {
         int ecs = Perf.start("create_ECS");
@@ -274,6 +291,7 @@ public class Context
         playerSystem = new PlayerSystem();
         objectPickingSystem = new ObjectPickingSystem();
         intermediateRenderingSystem = new IntermediateRenderingSystem();
+        wireframeRenderSystem = new WireframeRenderSystem();
         Perf.end(systemsCreate);
 
         int assignContext = Perf.start("assign_system_context");
@@ -284,6 +302,7 @@ public class Context
         playerSystem.setContext(this);
         objectPickingSystem.setContext(this);
         intermediateRenderingSystem.setContext(this);
+        wireframeRenderSystem.setContext(this);
         Perf.end(assignContext);
 
         int createEngine = Perf.start("create_engine");
@@ -298,6 +317,7 @@ public class Context
         engine.addSystem(playerSystem);
         engine.addSystem(objectPickingSystem);
         engine.addSystem(intermediateRenderingSystem);
+        engine.addSystem(wireframeRenderSystem);
         Perf.end(addSystems);
     }
 
@@ -308,37 +328,64 @@ public class Context
         int createEntities = Perf.start("create_entities");
 
         int createSceneEntities = Perf.start("create_scene_entities");
-        Entity scene = SceneEntityFactory.createSceneEntity(DefaultAssets.i.crateSceneAsset , "models/crate.gltf" , "crate_scene");
-        SceneEntityFactory.addStaticBulletComponent(scene);
-        //engine.addEntity(scene);
-
-        Entity riggedModelScene = SceneEntityFactory.createSceneEntity(DefaultAssets.i.riggedCharacterSceneAsset , "models/RiggedFigure.gltf" , "rigged_model_scene");
-        SceneEntityFactory.addStaticBulletComponent(riggedModelScene);
-        //engine.addEntity(riggedModelScene);
-
-        Entity map = SceneEntityFactory.createSceneEntity(DefaultAssets.i.staticMapScene , "models/transmission_test/TransmissionTest.gltf" , "map_scene");
-        //SceneEntityFactory.addStaticBulletComponent(map);
-
-        engine.addEntity(map);
-
+//        Entity scene = SceneEntityFactory.createSceneEntity(DefaultAssets.i.crateSceneAsset , "models/crate.gltf" , "crate_scene");
+//        SceneEntityFactory.addStaticBulletComponent(scene);
+//        //engine.addEntity(scene);
+//
+//        Entity riggedModelScene = SceneEntityFactory.createSceneEntity(DefaultAssets.i.riggedCharacterSceneAsset , "models/RiggedFigure.gltf" , "rigged_model_scene");
+//        SceneEntityFactory.addStaticBulletComponent(riggedModelScene);
+//        //engine.addEntity(riggedModelScene);
+//
+//       // Entity map = SceneEntityFactory.createSceneEntity(DefaultAssets.i.staticMapScene , "models/transmission_test/TransmissionTest.gltf" , "map_scene");
+//        //SceneEntityFactory.addStaticBulletComponent(map);
+//
+//        //engine.addEntity(map);
+//
         Entity player = SceneEntityFactory.createPlayerEntity(DefaultAssets.i.playerSceneAsset , "models/Player.gltf");
-        //engine.addEntity(player);
+        engine.addEntity(player);
         Perf.end(createSceneEntities);
 
         BulletComponent bulletComponent = new BulletComponent(PhysicsAttributes.STATIC | PhysicsAttributes.DEBUG_DRAW_ENABLED);
+        int i=0;
+        for (ModelInstance modelInstance : instances) {
+            i++;
+//            modelInstance.transform.setTranslation(MiscUtils.getRandomVector3(-10f , 10f));
+            btCollisionShape shape = BulletUtils.createTriangleMeshShape(modelInstance.model);
 
-        for (ModelInstance instance : instances) {
-            instance.transform.setTranslation(MiscUtils.getRandomVector3(-10f , 10f));
-            Entity entity = SceneEntityFactory.createSceneEntity(instance , instance.getClass().getSimpleName());
-            // SceneEntityFactory.addDynamicBulletComponent(entity);
+            float mass = 10f;
+            shape.setLocalScaling(modelInstance.transform.getScale(new Vector3()));
+            shape.calculateLocalInertia(mass , bulletComponent.inertia);
+
+            MotionState motionState = new MotionState(modelInstance.transform);
+            motionState.setWorldTransform(modelInstance.transform);
+
+            bulletComponent.motionState = motionState;
+
+            btRigidBody.btRigidBodyConstructionInfo constructionInfo = new btRigidBody.btRigidBodyConstructionInfo(mass , motionState , shape , bulletComponent.inertia);
+            btRigidBody body = new btRigidBody(constructionInfo);
+            body.setWorldTransform(modelInstance.transform);
+
+
+            bulletWorld.addBody(body);
+            Entity entity = SceneEntityFactory.createSceneEntity(modelInstance , "SceneEntity " + i);
+            //entity.add(new BulletComponent(false));
+//            SceneEntityFactory.addDynamicBulletComponent(entity);
             engine.addEntity(entity);
         }
 
-        //        SceneComponent sceneComponent = SceneEntityFactory.createSceneComponent("industrial_map","models/map_industrial/map_industrial.gltf");
-        //
-        //        Entity mapEntity = new Entity();
-        //        mapEntity.add(sceneComponent);
-        //        engine.addEntity(mapEntity);
+                SceneComponent sceneComponent = SceneEntityFactory.createSceneComponent("de_chateau", "resources/models/Chateau.gltf");
+
+                Entity mapEntity = new Entity();
+                mapEntity.add(sceneComponent);
+          //      engine.addEntity(mapEntity);
+                sceneComponent.setPosition(0,6,0);
+                sceneComponent.setScale(1f,1f,1f);
+                sceneComponent.setRotation(0,0,0);
+//        SceneComponent industrialMap = SceneEntityFactory.createSceneComponent("industrial_map", "models/map_industrial/map_industrial.gltf");
+//
+//        Entity industrialMapEntity = new Entity();
+//        industrialMapEntity.add(industrialMap);
+//        engine.addEntity(industrialMapEntity);
 
         sceneSerializer = new SceneSerializer();
         sceneSerializer.serializeComponentRegistry();

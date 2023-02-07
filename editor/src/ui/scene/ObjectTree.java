@@ -95,6 +95,7 @@ public class ObjectTree
                 clearTransformValues();
                 sceneComponent.selected = true;
                 SceneSystem.selectedSceneComponent = sceneComponent;
+                Context.getInstance().objectPickingSystem.setSelectedObject(sceneComponent);
 
                 Log.info(sceneComponent.id + " " + sceneComponent.selected + componentArray.size);
 
@@ -114,7 +115,7 @@ public class ObjectTree
                     sceneComponent.selected = false;
                 }
 
-                Context.getInstance().objectPickingSystem.updateSelection(sceneComponent);
+                Context.getInstance().objectPickingSystem.setSelectedObject(sceneComponent);
 
                 //   System.out.println("selected: " + node.getValue().selected);
                 //selectedComponent.gltfScene.modelInstance.transform

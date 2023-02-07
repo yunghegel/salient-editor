@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Widget;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.kotcrab.vis.ui.util.highlight.Highlighter;
@@ -78,6 +79,19 @@ public class MiscUtils
     public static boolean isInsideViewport(int screenX, int screenY, Viewport viewport) {
         return screenX >= 0 && screenY >= 0 && screenX < viewport.getCamera().viewportWidth && screenY < viewport.getCamera().viewportHeight;
     }
+
+    public static boolean isInsideWidget(int screenX, int screenY, Widget widget) {
+        return screenX >= widget.getX() && screenY >= widget.getY() && screenX < widget.getX() + widget.getWidth() && screenY < widget.getY() + widget.getHeight();
+    }
+    public static boolean isInsideSubRectangle(int screenX, int screenY, int x, int y, int width, int height) {
+        return screenX >= x && screenY >= y && screenX < x + width && screenY < y + height;
+    }
+    public static boolean isInsideSubRectangle(int screenX, int screenY, int x, int y, int width, int height, int padLeft,int padRight,int padBottom,int padTop) {
+        return screenX >= x+padLeft && screenY >= y+padBottom && screenX < x + width-padRight && screenY < y + height-padTop;
+    }
+
+
+
 
     public static Highlighter createHighlighter(){
 

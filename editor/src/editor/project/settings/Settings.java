@@ -70,7 +70,7 @@ public class Settings
     public static class Graphics
     {
 
-        public static final int ANTIALIASING = 2;
+        public static final int ANTIALIASING = 8;
         public static final int DEPTH = 8;
         public static final int STENCIL = 8;
         public static final boolean VSYNC = false;

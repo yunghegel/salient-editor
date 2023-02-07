@@ -16,7 +16,10 @@ import com.badlogic.gdx.graphics.g3d.model.NodePart;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.BoxShapeBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.CapsuleShapeBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.ConeShapeBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.SphereShapeBuilder;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
@@ -64,8 +67,8 @@ public class ModelUtils
 
 
     public static ModelInstance createGrid(float step,float alpha){
-        final float GRID_MIN = -1000f;
-        final float GRID_MAX = 1000f;
+        final float GRID_MIN = -500f;
+        final float GRID_MAX = 500f;
         final float GRID_STEP = step;
         ModelBuilder modelBuilder = new ModelBuilder();
         Material mat = new Material();
@@ -237,13 +240,13 @@ public class ModelUtils
         modelBuilder.begin();
         MeshPartBuilder meshBuilder;
         // line
-        meshBuilder = modelBuilder.part("line" , GL20.GL_LINES , VertexAttributes.Usage.Position | VertexAttributes.Usage.ColorUnpacked |VertexAttributes.Usage.Normal, mat);
+        meshBuilder = modelBuilder.part("line" , GL20.GL_LINES , VertexAttributes.Usage.Position | VertexAttributes.Usage.TextureCoordinates |VertexAttributes.Usage.Normal, mat);
         meshBuilder.line(from.x , from.y , from.z , to.x , to.y , to.z);
         //rectangular prism
         Node node1 = modelBuilder.node();
 //        node1.translation.set(to.cpy().sub(from).scl(0.5f).add(from));
         node1.translation.set(from.cpy().add(to).scl(0.5f));
-        meshBuilder = modelBuilder.part("rectangularPrism" , GL20.GL_TRIANGLES , VertexAttributes.Usage.Position | VertexAttributes.Usage.ColorUnpacked |VertexAttributes.Usage.Normal, mat);
+        meshBuilder = modelBuilder.part("rectangularPrism" , GL20.GL_TRIANGLES , VertexAttributes.Usage.Position | VertexAttributes.Usage.TextureCoordinates |VertexAttributes.Usage.Normal, mat);
         BoxShapeBuilder.build(meshBuilder , 0.08f/3+to.x , 0.08f/3+to.y , 0.08f/3+to.z);
 
 
@@ -264,6 +267,10 @@ public class ModelUtils
             m.set(PBRColorAttribute.createBaseColorFactor(outlineColor));
             m.set(new BlendingAttribute(GL20.GL_SRC_ALPHA , GL20.GL_ONE_MINUS_SRC_ALPHA));
             m.set(new BlendingAttribute(0.5f));
+        }
+        if (!Gdx.gl.glIsEnabled(GL20.GL_BLEND)) {
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+
         }
     }
     public static Model createOutlineModelAsCopy(Model model,Color outlineColor,float fattenAmount){
@@ -356,19 +363,44 @@ public class ModelUtils
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
         Color color = getRandomColor();
-        Material material = new Material(ColorAttribute.createDiffuse(color));
-        material.set(PBRColorAttribute.createBaseColorFactor(color));
+        Material material = MaterialUtils.createGenericBDSFMateral(color);
+        material.set(new ColorAttribute(PBRColorAttribute.createBaseColorFactor(color)));
+        MaterialUtils.addAlphaAttribute(material,1);
         MeshPartBuilder meshBuilder = modelBuilder.part("box" , GL20.GL_TRIANGLES , VertexAttribute.Position().usage | VertexAttribute.Normal().usage | VertexAttribute.TexCoords(0).usage , material);
-        SphereShapeBuilder.build(meshBuilder , radius , radius , radius , 10 , 10);
-        return modelBuilder.end();
+        SphereShapeBuilder.build(meshBuilder , radius , radius , radius , 40 , 40);
+        Model mdl =  modelBuilder.end();
+
+        return mdl;
     }
 
     public static Color getRandomColor(){
         Color color = new Color();
-    double rand = Math.random();
-    int size = colors.length;
-    int index = (int) (rand * size);
-    color.set(colors[index]);
+        color.r = MathUtils.random();
+        color.g = MathUtils.random();
+        color.b = MathUtils.random();
+        int redGreenOrBlueBias = MathUtils.random(0,2);
+        if(redGreenOrBlueBias == 0){
+            color.r = 1;
+
+            }
+        else if(redGreenOrBlueBias == 1){
+            color.g = 1;
+        }
+        else if(redGreenOrBlueBias == 2){
+            color.b = 1;
+        }
+
+        int lightOrDarkBias = MathUtils.random(0,1);
+        if (lightOrDarkBias==0){
+            color.r = color.r/2;
+            color.g = color.g/2;
+            color.b = color.b/2;
+        }
+
+
+
+        color.a = 1f;
+
     return color;
     }
 
@@ -376,10 +408,50 @@ public class ModelUtils
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
         Color color = getRandomColor();
-        Material material = new Material(ColorAttribute.createDiffuse(color));
+        Material material = new Material(PBRColorAttribute.createDiffuse(color));
+        material.set(PBRColorAttribute.createSpecular(color));
         material.set(PBRColorAttribute.createBaseColorFactor(color));
+        material.set(PBRColorAttribute.createEmissive(color));
+        material.set(PBRColorAttribute.createAmbient(color));
+        material.set(PBRColorAttribute.createReflection(color));
+        MaterialUtils.addAlphaAttribute(material,1);
         MeshPartBuilder meshBuilder = modelBuilder.part("box" , GL20.GL_TRIANGLES , VertexAttribute.Position().usage | VertexAttribute.Normal().usage | VertexAttribute.TexCoords(0).usage , material);
         BoxShapeBuilder.build(meshBuilder , size , size , size);
+        return modelBuilder.end();
+    }
+
+    public static Model createCone(float width , float height,float depth){
+        ModelBuilder modelBuilder = new ModelBuilder();
+        modelBuilder.begin();
+        Color color = getRandomColor();
+        Material material = new Material(PBRColorAttribute.createDiffuse(color));
+        material.set(PBRColorAttribute.createSpecular(color));
+        material.set(PBRColorAttribute.createBaseColorFactor(color));
+        material.set(PBRColorAttribute.createEmissive(color));
+        material.set(PBRColorAttribute.createAmbient(color));
+        material.set(PBRColorAttribute.createReflection(color));
+        MaterialUtils.addAlphaAttribute(material,1f);
+        MeshPartBuilder meshBuilder = modelBuilder.part("box" , GL20.GL_TRIANGLES , VertexAttribute.Position().usage | VertexAttribute.Normal().usage | VertexAttribute.TexCoords(0).usage , material);
+        ConeShapeBuilder.build(meshBuilder , width , height , depth,40);
+        return modelBuilder.end();
+    }
+
+    public static Model createCapsule(float radius , float height){
+        ModelBuilder modelBuilder = new ModelBuilder();
+        modelBuilder.begin();
+        Color color = getRandomColor();
+        Material material = new Material(PBRColorAttribute.createDiffuse(color));
+        material.set(PBRColorAttribute.createSpecular(color));
+        material.set(PBRColorAttribute.createBaseColorFactor(color));
+        material.set(PBRColorAttribute.createEmissive(color));
+        material.set(PBRColorAttribute.createAmbient(color));
+        material.set(PBRColorAttribute.createReflection(color));
+        MaterialUtils.addAlphaAttribute(material,1f);
+        MeshPartBuilder meshBuilder = modelBuilder.part("box" , GL20.GL_TRIANGLES , VertexAttribute.Position().usage | VertexAttribute.Normal().usage | VertexAttribute.TexCoords(0).usage , material);
+        //ensure height is at least 2x radius
+        height = Math.max(height, 2 * radius);
+
+        CapsuleShapeBuilder.build(meshBuilder , radius , height , 40);
         return modelBuilder.end();
     }
 

@@ -85,8 +85,9 @@ public class SceneSystem extends IteratingSystem
     protected void processEntity(com.badlogic.ashley.core.Entity entity , float deltaTime) {
         core.components.SceneComponent sceneComponent = pm.get(entity);
         sceneComponent.update();
-        if (!sceneManager.getRenderableProviders().contains(sceneComponent.scene , false)) {
+        if (!sceneManager.getRenderableProviders().contains(sceneComponent.scene , false)&&!sceneComponent.initialized) {
             sceneManager.addScene(sceneComponent.scene);
+            sceneComponent.initialized = true;
             // sceneManager.addScene(sceneComponent.boundingBoxScene);
             Log.info("RenderSystem" , "New scene identified but not present in scene manager...adding to scene manager");
         }
@@ -178,7 +179,7 @@ public class SceneSystem extends IteratingSystem
     }
 
     public void renderShapes() {
-        if (selectedSceneComponent != null) {
+        if (selectedSceneComponent != null&&selectedSceneComponent.drawBounds) {
 
             shapeRenderer.setProjectionMatrix(sceneManager.camera.combined);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);

@@ -421,10 +421,10 @@ private class CameraProfilerTable extends Table{
             cameraY.setText("cam y:  "+ StringUtils.trimFloat(i.cameraPosition.y));
             cameraZ.setText("cam z:  "+ StringUtils.trimFloat(i.cameraPosition.z));
 
-            zPlaneIntersection.setText("z plane intersection:  "+ StringUtils.trimVector3(i.zPlaneIntersection));
-            yPlaneIntersection.setText("y plane intersection:  "+ StringUtils.trimVector3(i.yPlaneIntersection));
-            xPlaneIntersection.setText("x plane intersection:  "+ StringUtils.trimVector3(i.xPlaneIntersection));
-            transformState.setText("transform state:  "+ Context.getInstance().gizmoSystem.translateTool.state);
+            zPlaneIntersection.setText("degree:  "+ StringUtils.trimFloat(Context.getInstance().gizmoSystem.rotateTool.degree));
+            yPlaneIntersection.setText("dst:  "+ StringUtils.trimFloat((float)Context.getInstance().gizmoSystem.rotateTool.dst));
+            xPlaneIntersection.setText("intersection point (rot):  "+ StringUtils.trimVector3(Context.getInstance().gizmoSystem.rotateTool.intersectionPoint));
+            transformState.setText("transform state:  "+ Context.getInstance().gizmoSystem.rotateTool.rotationState);
             mousePos.setText("mouse pos:  "+ (i.mousePos));
             currentPos.setText("camera pos:  "+ StringUtils.trimVector3(TranslateTool.currentPos));
             camDir.setText("camera dir:  "+ StringUtils.trimVector3(Context.getInstance().camera.direction));

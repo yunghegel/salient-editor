@@ -3,9 +3,17 @@ package util;
 import backend.tools.Log;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.DirectionalLightsAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.PointLightsAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.SpotLightsAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
+import com.badlogic.gdx.graphics.g3d.environment.SpotLight;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 import net.mgsx.gltf.loaders.gltf.GLTFLoader;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
@@ -86,6 +94,35 @@ public class SceneUtils
         Log.info("PBRShader & DepthShader intitialized with the following config parameters: +\n" + "# bones supported: " + config.numBones + ",\n" + "# directional lights supported: " + config.numDirectionalLights + ",\n" + "# point lights supported: " + config.numPointLights + ",\n" + "# spot lights supported: " + config.numSpotLights);
 
         return sceneManager;
+    }
+
+    public static DirectionalLight getDirectionalLight(Environment env) {
+        DirectionalLightsAttribute dirLightAttribs = env.get(DirectionalLightsAttribute.class, DirectionalLightsAttribute.Type);
+        Array<DirectionalLight> dirLights = dirLightAttribs.lights;
+        if (dirLights != null && dirLights.size > 0) {
+            return dirLights.first();
+        }
+        return null;
+    }
+
+    public static Array<PointLight> getPointLights(Environment env) {
+        PointLightsAttribute attr = env.get(PointLightsAttribute.class, PointLightsAttribute.Type);
+        return attr == null ? new Array<PointLight>() : attr.lights;
+    }
+
+    public static int getPointLightsCount(Environment env) {
+        Array<PointLight> pointLights = getPointLights(env);
+        return pointLights == null ? 0 : pointLights.size;
+    }
+
+    public static Array<SpotLight> getSpotLights(Environment env) {
+        SpotLightsAttribute spotAttr = env.get(SpotLightsAttribute.class, SpotLightsAttribute.Type);
+        return spotAttr == null ? new Array<SpotLight>() : spotAttr.lights;
+    }
+
+    public static int getSpotLightsCount(Environment env) {
+        Array<SpotLight> spotLights = getSpotLights(env);
+        return spotLights == null ? 0 : spotLights.size;
     }
 
     /**

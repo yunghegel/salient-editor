@@ -63,9 +63,12 @@ public class MainScreen implements Screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         engine.update(delta);
+
         processInput();
         stage.act(delta);
         stage.draw();
+
+
         batch.begin();
         font.draw(batch, "" + Gdx.graphics.getFramesPerSecond(), ui.leftTable.getWidth()+10, Gdx.graphics.getHeight()-40);
         batch.end();

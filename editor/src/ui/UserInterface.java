@@ -75,7 +75,7 @@ public class UserInterface
     public VisTextButton addChildNodeButton;
     public VisSelectBox<NodeType> nodeTypeSelectBox;
     public Stage stage;
-    RenderWidget renderWidget;
+    public RenderWidget renderWidget;
     Table bottomLeftTable;
     Table bottomRightTable;
     VisWindow logWindow;
@@ -93,7 +93,7 @@ public class UserInterface
     private ModelPreviewWindow modelPreviewWindow;
     private DataWindow dataWindow;
     private VisScrollPane componentInspectorScrollPane;
-    VisWindow toolSidebarWindow;
+    public VisWindow toolSidebarWindow;
     VisSplitPane sceneGraphSplitPane;
     public VisSplitPane profilerObjectPreviewerSplitPane;
     public BulletPhysicsTool bulletPhysicsTool;
@@ -290,7 +290,7 @@ public class UserInterface
         {
             @Override
             public void changed(ChangeEvent event , Actor actor) {
-                boolean enabled = GizmoSystem.transformToolEnabled;
+                boolean enabled = GizmoSystem.translateToolEnabled;
 
                 if(SceneSystem.selectedSceneComponent==null){
                     return;
@@ -305,7 +305,7 @@ public class UserInterface
         {
             @Override
             public void changed(ChangeEvent event , Actor actor) {
-                boolean enabled = GizmoSystem.transformToolEnabled;
+                boolean enabled = GizmoSystem.translateToolEnabled;
 
                 if(SceneSystem.selectedSceneComponent==null){
                     return;

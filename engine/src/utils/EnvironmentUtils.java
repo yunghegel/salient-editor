@@ -23,7 +23,7 @@ public class EnvironmentUtils {
     public static void setupLight(DirectionalLightEx light,SceneManager sceneManager) {
 
         light.direction.set(.5f, -.45f, 0);
-        light.intensity = 2f;
+        light.intensity = 1f;
         light.color.set(1, 1, 1, 1);
         //sceneManager.environment.add(light);
         sceneManager.setAmbientLight(2f);

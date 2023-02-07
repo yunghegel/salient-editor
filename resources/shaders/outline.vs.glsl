@@ -13,7 +13,7 @@ attribute vec4 a_position;
 attribute vec2 a_texCoord0;
 
 uniform mat4 u_projTrans;
-uniform vec2 u_size;
+const vec2 u_size=vec2(1.0,1.0);
 
 varying MED vec2 v_texCoords0;
 varying MED vec2 v_texCoords1;

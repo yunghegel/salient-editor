@@ -71,7 +71,7 @@ public class IntermediateRenderingSystem extends IteratingSystem
         //shader = new ShaderProgram(Gdx.files.internal("shaders/outline.vert"), Gdx.files.internal("shaders/outline.frag"));
         environment = new Environment();
         shadowLight = new DirectionalShadowLight(1024, 1024, 100f, 100f, 1f, 300f);
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 1.0f, 1f, .6f, 1f));
+        //environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 1.0f, 1f, .6f, 1f));
         environment.add((shadowLight = new DirectionalShadowLight(1024, 1024, 60f, 60f, .1f, 50f))
                                 .set(1f, 1f, 1f, 40.0f, -35f, -35f));
         environment.shadowMap = shadowLight;

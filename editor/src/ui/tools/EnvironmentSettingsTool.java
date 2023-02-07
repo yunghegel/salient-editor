@@ -1,9 +1,11 @@
 package ui.tools;
 
+import backend.tools.Log;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
@@ -182,7 +184,7 @@ public class EnvironmentSettingsTool extends AbstractTool
         private void create() {
 
             skyboxCheckbox = new VisCheckBox("Skybox Enabled");
-            skyboxCheckbox.setChecked(true);
+            skyboxCheckbox.setChecked(false);
             skyboxCheckbox.padRight(10);
 
             skyboxSelectionBox = new VisSelectBox<EnvironmentSettingsTool.DefaultSkyboxes>();
@@ -205,8 +207,8 @@ public class EnvironmentSettingsTool extends AbstractTool
             fogFlag = new VisCheckBox("Fog Enabled");
             fogFlag.setChecked(true);
 
-            ambientLightSlider = new VisSlider(.1f , 2f , 0.1f , false);
-            ambientLightSlider.setValue(1);
+            ambientLightSlider = new VisSlider(.01f , .5f , 0.01f , false);
+            ambientLightSlider.setValue(0.1f);
             envRotationSlider = new VisSlider(0f , 360f , 0.01f , false);
             envRotationSlider.setValue(.5f);
             shadowLightIntensitySlider = new VisSlider(0f , 20f , 0.01f , false);
@@ -269,14 +271,7 @@ public class EnvironmentSettingsTool extends AbstractTool
                 @Override
                 public void changed(ChangeEvent event , Actor actor) {
 
-                    if (context.drawAxes) {
-                        context.drawAxes = false;
-                        context.getSceneManager().removeScene(context.getAxesScene());
-                    }
-                    else {
-                        context.drawAxes = true;
-                        context.getSceneManager().addScene(context.getAxesScene());
-                    }
+                    context.sceneRenderer.toggleAxes();
                 }
             });
 
@@ -313,10 +308,11 @@ public class EnvironmentSettingsTool extends AbstractTool
                 @Override
                 public void changed(ChangeEvent event , Actor actor) {
                     if (ambientLightFlag.isChecked()) {
-                        sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , currentColor));
+                        sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , 0f , 0f , 0f , 0.01f));
+
                     }
                     else {
-                        sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , 0f , 0f , 0f , 1f));
+                        sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , 0f , 0f , 0f , 0.01f));
                     }
 
                 }
@@ -334,6 +330,8 @@ public class EnvironmentSettingsTool extends AbstractTool
                         sceneManager.environment.remove(shadowLight);
 
                     }
+
+
 
                 }
             });
@@ -358,7 +356,7 @@ public class EnvironmentSettingsTool extends AbstractTool
                 @Override
                 public void changed(ChangeEvent event , Actor actor) {
                     float lum = ambientLightSlider.getValue();
-                    sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , lum , lum , lum , 1));
+                    sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight , lum, lum, lum, 0.01f));
 
                     //sceneManager.environment.set(new ColorAttribute(ColorAttribute.AmbientLight, currentColor.r, currentColor.g, currentColor.b, slider1.getValue()));
 

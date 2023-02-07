@@ -108,7 +108,7 @@ public class MousePickingTool implements Renderer, InputProcessor
     private MousePickingTool(){
         createPlanes();
 
-        RenderWidget.getInstance().addRenderer(this);
+        //RenderWidget.renderWidgetMultiplexer.addProcessor(this);
         sphere = ModelUtils.createSphere(1);
         sphereInstance = new ModelInstance(sphere);
         batch = new ModelBatch();
@@ -122,73 +122,16 @@ public class MousePickingTool implements Renderer, InputProcessor
     public void render(Camera cam) {
         Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         shapeRenderer.setProjectionMatrix(cam.combined);
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.YELLOW);
-//        shapeRenderer.line(cam.position,Vector3.Zero);
-//        shapeRenderer.line(cam.position,worldIntersectionCoordinates);
-//        ray = RenderWidget.viewport.getPickRay(Gdx.input.getX(), Gdx.input.getY());
-//        shapeRenderer.line(ray.origin,ray.direction.sub(ray.origin));
-//        shapeRenderer.line((ray.origin),decomposedXVector);
-//        shapeRenderer.line((ray.origin),decomposedYVector);
-//        shapeRenderer.line((ray.origin),decomposedZVector);
-//
-//        shapeRenderer.end();
-
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.RED);
-//        shapeRenderer.line(origin,decomposedXVector);
-//        shapeRenderer.end();
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.GREEN);
-//        shapeRenderer.line(origin,decomposedYVector);
-//        shapeRenderer.end();
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.BLUE);
-//        shapeRenderer.line(origin,decomposedZVector);
-//        shapeRenderer.end();
-
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.RED);
-        //shapeRenderer.circle(worldIntersectionCoordinates.x,worldIntersectionCoordinates.z,1);
         shapeRenderer.end();
-
-
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.RED);
-//        shapeRenderer.line(decomposedZVector.cpy().add(decomposedXVector),decomposedZVector);
-//        shapeRenderer.line(decomposedYVector,decomposedXVector.cpy().add(decomposedYVector));
-//        shapeRenderer.end();
-//
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.GREEN);
-//        shapeRenderer.line(decomposedZVector,decomposedYVector.cpy().add(decomposedZVector));
-//        shapeRenderer.line(decomposedXVector.cpy().add(decomposedYVector),decomposedXVector);
-//        shapeRenderer.end();
-//
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(Color.BLUE);
-//        shapeRenderer.line(decomposedXVector,decomposedZVector.cpy().add(decomposedXVector));
-//        shapeRenderer.line(decomposedYVector.cpy().add(decomposedZVector),decomposedYVector);
-//        shapeRenderer.end();
-
         batch.begin(cam);
-
-
-        batch.render(sphereInstance,Context.getInstance().getSceneManager().environment);
         batch.end();
-
-
-
-
-
     }
 
     public void update(){
         ray = RenderWidget.viewport.getPickRay(mousePos.x , mousePos.y);
         updateCameraPos();
-//        calculateObjectDistToOrigin(sphereInstance,distanceToOrigin);
-//        updatePlaneDistanceFromOrigin(distanceToOrigin);
-//        setOriginToObjectTranslation(sphereInstance);
         calculateDecomposedXYZVectors();
     }
 

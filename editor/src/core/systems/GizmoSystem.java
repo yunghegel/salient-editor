@@ -1,5 +1,6 @@
 package core.systems;
 
+import backend.tools.Log;
 import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.Gdx;
@@ -21,8 +22,9 @@ import com.kotcrab.vis.ui.widget.VisLabel;
 import editor.graphics.rendering.Renderer;
 import core.components.SceneComponent;
 import editor.Context;
+import editor.tools.RotateTool;
 import net.mgsx.gltf.scene3d.scene.Scene;
-import sys.Log;
+
 import editor.tools.ScaleTool;
 import editor.tools.TranslateTool;
 import ui.widgets.RenderWidget;
@@ -30,43 +32,32 @@ import util.ModelUtils;
 
 public class GizmoSystem extends IteratingSystem implements Renderer
 {
+    public static boolean translateToolEnabled = false;
+    public static boolean scaleToolEnabled = false;
+    public static boolean rotateToolEnabled = false;
 
     public static boolean translateX = false;
     public static boolean translateY = false;
     public static boolean translateZ = false;
-    public static boolean transformToolEnabled = false;
+
     public static boolean scaleX = false;
     public static boolean scaleY = false;
     public static boolean scaleZ = false;
     public static boolean scaleXYZ = false;
-    public static boolean scaleToolEnabled = false;
+
+
     public static VisLabel selectedComponent;
-    public ModelInstance translateGizmo;
-    public ModelInstance rotateGizmo;
-    public ModelInstance scaleGizmo;
-    public BoundingBox xArrowBoundingBox;
-    public BoundingBox yArrowBoundingBox;
-    public BoundingBox zArrowBoundingBox;
-    public Scene translateGizmoScene;
+
     public TranslateTool translateTool;
     public ScaleTool scaleTool;
+    public RotateTool rotateTool;
     ComponentMapper<SceneComponent> pm = ComponentMapper.getFor(SceneComponent.class);
     Ray ray = new Ray();
-    BoundingBox selectedBoundingBox = new BoundingBox();
-    Vector3 currentPos = new Vector3();
-    Vector3 lastPos = new Vector3();
-    Vector3 deltaPos = new Vector3();
-    Mesh xArrowMesh;
-    Mesh yArrowMesh;
-    Mesh zArrowMesh;
-    Model xArrowModel;
-    Model yArrowModel;
-    Model zArrowModel;
     ShapeRenderer shapeRenderer = new ShapeRenderer();
-    Array<Mesh> translateArrowMeshes = new Array<Mesh>();
     private SceneComponent selectedSceneComponent;
     private Context context;
-    private ModelBatch batch;
+
+
 
     public GizmoSystem() {
 
@@ -90,7 +81,7 @@ public class GizmoSystem extends IteratingSystem implements Renderer
         super.addedToEngine(engine);
         translateTool = new TranslateTool(context.getSceneManager() , context.getCamera());
         scaleTool = new ScaleTool(context.getSceneManager() , context.getCamera());
-        batch = new ModelBatch();
+        rotateTool = new RotateTool(context.getSceneManager());
         Log.info("GizmoSystem" , "GizmoSystem added to engine");
     }
 
@@ -106,14 +97,19 @@ public class GizmoSystem extends IteratingSystem implements Renderer
             toggleScaleTool();
         }
 
+        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            toggleRotateTool();
+        }
+
         if (SceneSystem.selectedSceneComponent != null) {
             translateTool.setSelectedComponent(SceneSystem.selectedSceneComponent);
             scaleTool.setSelectedComponent(SceneSystem.selectedSceneComponent);
+            rotateTool.setSelectedComponent(SceneSystem.selectedSceneComponent);
             scaleTool.update();
             translateTool.update();
+            rotateTool.update();
             selectedSceneComponent = SceneSystem.selectedSceneComponent;
         }
-
 
     }
 
@@ -125,17 +121,19 @@ public class GizmoSystem extends IteratingSystem implements Renderer
             selectedSceneComponent = sceneComponent;
             translateTool.setSelectedComponent(SceneSystem.selectedSceneComponent);
             scaleTool.setSelectedComponent(SceneSystem.selectedSceneComponent);
+            rotateTool.setSelectedComponent(SceneSystem.selectedSceneComponent);
             translateTool.update();
+            rotateTool.update();
             scaleTool.update();
-
-            ///selectedComponent.setText("Selected: " + sceneComponent.id);
         }
-        if (Gdx.input.isButtonJustPressed(0) && transformToolEnabled) {
-
+        if (Gdx.input.isButtonJustPressed(0) && translateToolEnabled) {
             pickTranslateGizmo();
         }
         if (Gdx.input.isButtonJustPressed(0) && scaleToolEnabled) {
             pickScaleGizmo();
+        }
+        if (Gdx.input.isButtonJustPressed(0) && rotateToolEnabled) {
+            pickRotateGizmo();
         }
     }
 
@@ -147,25 +145,25 @@ public class GizmoSystem extends IteratingSystem implements Renderer
         if (Intersector.intersectRayBounds(ray , translateTool.xArrowBoundingBox , intersection)) {
             setTranslateX();
             translateTool.state = TranslateTool.TransformState.TRANSLATE_X;
-            translateTool.initTranslate=true;
+            translateTool.initTranslate = true;
             Log.info("GizmoSystem" , "Picked X arrow");
         }
         if (Intersector.intersectRayBounds(ray , translateTool.yArrowBoundingBox , intersection)) {
             setTranslateY();
             translateTool.state = TranslateTool.TransformState.TRANSLATE_Y;
-            translateTool.initTranslate=true;
+            translateTool.initTranslate = true;
             Log.info("GizmoSystem" , "Picked Y arrow");
         }
         if (Intersector.intersectRayBounds(ray , translateTool.zArrowBoundingBox , intersection)) {
             setTranslateZ();
             translateTool.state = TranslateTool.TransformState.TRANSLATE_Z;
-            translateTool.initTranslate=true;
+            translateTool.initTranslate = true;
             Log.info("GizmoSystem" , "Picked Z arrow");
         }
 
     }
 
-    private void pickScaleGizmo(){
+    private void pickScaleGizmo() {
         ray = RenderWidget.viewport.getPickRay(Gdx.input.getX() , Gdx.input.getY());
         Vector3 intersection = new Vector3();
         setScaleNone();
@@ -173,35 +171,74 @@ public class GizmoSystem extends IteratingSystem implements Renderer
         if (Intersector.intersectRayBounds(ray , scaleTool.xHandleBoundingBox , intersection)) {
             setScaleX();
             scaleTool.scaleState = ScaleTool.ScaleState.SCALE_X;
-            scaleTool.initScale=true;
+            scaleTool.initScale = true;
             Log.info("GizmoSystem" , "Picked X handle");
         }
         if (Intersector.intersectRayBounds(ray , scaleTool.yHandleBoundingBox , intersection)) {
             setScaleY();
             scaleTool.scaleState = ScaleTool.ScaleState.SCALE_Y;
-            scaleTool.initScale=true;
+            scaleTool.initScale = true;
             Log.info("GizmoSystem" , "Picked Y handle");
         }
         if (Intersector.intersectRayBounds(ray , scaleTool.zHandleBoundingBox , intersection)) {
             setScaleZ();
             scaleTool.scaleState = ScaleTool.ScaleState.SCALE_Z;
-            scaleTool.initScale=true;
+            scaleTool.initScale = true;
             Log.info("GizmoSystem" , "Picked Z handle");
         }
         if (Intersector.intersectRayBounds(ray , scaleTool.xyzHandleBoundingBox , intersection)) {
             setScaleXYZ();
             scaleTool.scaleState = ScaleTool.ScaleState.SCALE_XYZ;
-            scaleTool.initScale=true;
+            scaleTool.initScale = true;
             Log.info("GizmoSystem" , "Picked XYZ handle");
         }
+    }
+
+    private void pickRotateGizmo(){
+        ray = RenderWidget.viewport.getPickRay(Gdx.input.getX() , Gdx.input.getY());
+        Vector3 intersection = new Vector3();
+        float dst = 0;
+        rotateTool.rotationState = RotateTool.RotationState.NONE;
+        BoundingBox boundingBox = new BoundingBox();
+        rotateTool.gizmo.calculateBoundingBox(boundingBox);
+        boundingBox.mul(rotateTool.gizmo.transform);
+        if (!Intersector.intersectRayBounds(ray , boundingBox , intersection)) {
+            return;
+        }
+
+        if (context.objectPickingSystem.pickMeshFromTriangles(rotateTool.xHandleMesh,rotateTool.intersectionPoint,dst,rotateTool.gizmo.transform)){
+            rotateTool.rotationState = RotateTool.RotationState.ROTATE_X;
+            rotateTool.initRotate = true;
+            Log.info("GizmoSystem" , "Picked X handle");
+            return;
+        }
+
+
+
+        if (context.objectPickingSystem.pickMeshFromTriangles(rotateTool.yHandleMesh,rotateTool.intersectionPoint,dst,rotateTool.gizmo.transform)){
+            rotateTool.rotationState = RotateTool.RotationState.ROTATE_Y;
+            rotateTool.initRotate = true;
+            Log.info("GizmoSystem" , "Picked Y handle");
+            return;
+        }
+         if (context.objectPickingSystem.pickMeshFromTriangles(rotateTool.zHandleMesh,rotateTool.intersectionPoint,dst,rotateTool.gizmo.transform)){
+            rotateTool.rotationState = RotateTool.RotationState.ROTATE_Z;
+            rotateTool.initRotate = true;
+            Log.info("GizmoSystem" , "Picked Z handle");
+            return;
+        }
+
+
 
     }
 
-    public void toggleTranslateTool(){
-        transformToolEnabled = !transformToolEnabled;
+    public void toggleTranslateTool() {
+        translateToolEnabled = !translateToolEnabled;
         scaleToolEnabled = false;
+        rotateToolEnabled = false;
         scaleTool.disable();
-        if (transformToolEnabled) {
+        rotateTool.disable();
+        if (translateToolEnabled) {
             translateTool.enable();
 
         }
@@ -211,13 +248,15 @@ public class GizmoSystem extends IteratingSystem implements Renderer
             setTranslateNone();
         }
 
-        Log.info("GizmoSystem" , "Transform tool enabled: " + transformToolEnabled);
+        Log.info("GizmoSystem" , "Transform tool enabled: " + translateToolEnabled);
     }
 
-    public void toggleScaleTool(){
+    public void toggleScaleTool() {
         scaleToolEnabled = !scaleToolEnabled;
-        transformToolEnabled = false;
+        translateToolEnabled = false;
+        rotateToolEnabled = false;
         translateTool.disable();
+        rotateTool.disable();
         if (scaleToolEnabled) {
             scaleTool.enable();
         }
@@ -229,6 +268,23 @@ public class GizmoSystem extends IteratingSystem implements Renderer
         Log.info("GizmoSystem" , "Scale tool enabled: " + scaleToolEnabled);
     }
 
+    public void toggleRotateTool(){
+        if (rotateTool.getSelectedComponent() == null) return;
+        rotateToolEnabled = !rotateToolEnabled;
+        scaleToolEnabled = false;
+        translateToolEnabled = false;
+        scaleTool.disable();
+        translateTool.disable();
+        if (rotateToolEnabled) {
+            rotateTool.enable();
+        }
+        else {
+            rotateTool.disable();
+            rotateTool.update();
+        }
+
+        Log.info("GizmoSystem" , "Rotate tool enabled: " + rotateToolEnabled);
+    }
 
     public void setTranslateX() {
         translateX = true;
@@ -261,24 +317,28 @@ public class GizmoSystem extends IteratingSystem implements Renderer
         scaleZ = false;
         scaleXYZ = false;
     }
+
     public void setScaleY() {
         scaleY = true;
         scaleX = false;
         scaleZ = false;
         scaleXYZ = false;
     }
+
     public void setScaleZ() {
         scaleZ = true;
         scaleX = false;
         scaleY = false;
         scaleXYZ = false;
     }
+
     public void setScaleXYZ() {
         scaleXYZ = true;
         scaleX = false;
         scaleY = false;
         scaleZ = false;
     }
+
     public void setScaleNone() {
         scaleX = false;
         scaleY = false;
@@ -309,47 +369,18 @@ public class GizmoSystem extends IteratingSystem implements Renderer
         }
     }
 
-    public void drawSelectedModel(){
-        if (selectedSceneComponent != null) {
-            selectedSceneComponent.outlinedModelInstance.transform.set(selectedSceneComponent.scene.modelInstance.transform);
-
-            batch.render(selectedSceneComponent.outlinedModelInstance,context.sceneManager.environment);
-            ModelUtils.animateModelInstancePosition(selectedSceneComponent.outlinedModelInstance, Vector3.X,Vector3.Z,1f);
-            //context.sceneManager.getRenderableProviders().add(selectedSceneComponent.outlinedModelInstance);
-        }
-
-
-    }
-
     public void dispose() {
         shapeRenderer.dispose();
-        xArrowModel.dispose();
-        yArrowModel.dispose();
-        zArrowModel.dispose();
-        xArrowMesh.dispose();
-        yArrowMesh.dispose();
-        zArrowMesh.dispose();
+
         translateTool.dispose();
     }
 
     @Override
     public void render(Camera cam) {
-        //Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
-        batch.begin(context.sceneManager.camera);
-      //  drawSelectedModel();
-        batch.end();
 
 
     }
 
-    public void drawBbox(){
-        if (selectedSceneComponent != null) {
-            BoundingBox boundingBox = selectedSceneComponent.boundingBox;
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(Color.BLUE);
-            shapeRenderer.box(boundingBox.min.x , boundingBox.min.y , boundingBox.min.z + boundingBox.getDepth() , boundingBox.getWidth() , boundingBox.getHeight() , boundingBox.getDepth());
-            shapeRenderer.end();
-        }
-    }
+
 
 }

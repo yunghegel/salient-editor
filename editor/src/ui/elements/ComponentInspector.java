@@ -10,7 +10,9 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
@@ -22,11 +24,25 @@ import com.kotcrab.vis.ui.widget.*;
 import core.components.SceneComponent;
 import core.systems.SceneSystem;
 import editor.Context;
+import editor.graphics.scene.MeshInfo;
+import editor.tools.RotateTool;
+import editor.tools.ScaleTool;
 import editor.tools.TranslateTool;
 
 public class ComponentInspector extends VisWindow
 {
     VisTable root;
+
+    private static ComponentInspector instance;
+
+    public static ComponentInspector getInstance() {
+        if (instance == null) {
+            instance = new ComponentInspector();
+        }
+        return instance;
+    }
+
+    public SceneComponent selectedComponent;
 
     public CollapsibleWidget materialsWidget;
     public CollapsibleWidget transformWidget;
@@ -55,10 +71,35 @@ public class ComponentInspector extends VisWindow
 
     VisTextButton materialsExpandAllButton;
     VisTextButton materialsCollapseAllButton;
+    int count;
 
+    VisCheckBox setVisibleCheckBox;
 
+    public VisRadioButton wireFrameButton,pointsButton,drawBoundsButton, drawTextured,collapseAll,expandAll;
 
+    ButtonGroup<VisRadioButton> settingsButtonGroup;
+    FlowGroup settingsFlowGroup;
 
+    public Array<Mesh> expandedMeshes = new Array<Mesh>();
+    public Mesh selectedMesh;
+    public MeshInfo selectedMeshInfo;
+    public Array<MeshInfo> expandedMeshInfos = new Array<MeshInfo>();
+
+    public MeshInfo getSelectedMeshInfo() {
+        return selectedMeshInfo;
+    }
+
+    public void setSelectedMeshInfo(MeshInfo selectedMeshInfo) {
+        this.selectedMeshInfo = selectedMeshInfo;
+    }
+
+    public void setSelectedMesh(Mesh selectedMesh) {
+        this.selectedMesh = selectedMesh;
+    }
+
+    public Mesh getSelectedMesh() {
+        return selectedMesh;
+    }
 
     public ComponentInspector()
     {
@@ -71,7 +112,7 @@ public class ComponentInspector extends VisWindow
         //root.setFillParent(true);
         root.align(Align.top);
         rootScrollPane = new VisScrollPane(root);
-        root.padTop(25);
+        root.padTop(5);
         add(rootScrollPane).expand().fill().grow();
         getTitleLabel().setAlignment(Align.center);
         getTitleTable().pad(15).align(Align.center);
@@ -110,10 +151,22 @@ align(Align.center);
         meshTable.add(meshScrollPane);
         lightTable.add(lightWindow);
 
+        setVisibleCheckBox = new VisCheckBox("Visible");
+        setVisibleCheckBox.pad(5);
+        setVisibleCheckBox.setChecked(true);
+
+
+
         materialsWidget = new CollapsibleWidget(materialsTable, true);
         transformWidget = new CollapsibleWidget(transformTable,true);
         meshWidget = new CollapsibleWidget(meshTable,true);
         lightWidget = new CollapsibleWidget(lightTable,true);
+
+        createButtonGroup();
+        createButtonListeners();
+
+
+
         root.add(materialsButton).expandX().fillX().pad(5).row();
         root.add(materialsWidget).expandX().fillX().row();
         root.add(transformButton).expandX().fillX().pad(5).row();
@@ -157,20 +210,113 @@ align(Align.center);
         materialsExpandAllButton = new VisTextButton("Expand");
         materialsCollapseAllButton = new VisTextButton("Collapse");
 
-        createTransformTable();
 
+
+        setVisibleCheckBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (SceneSystem.selectedSceneComponent==null)   return;
+
+                if (Context.getInstance().sceneManager.getRenderableProviders().contains(SceneSystem.selectedSceneComponent.scene,true)) {
+                    Context.getInstance().sceneManager.removeScene(SceneSystem.selectedSceneComponent.scene);
+                    SceneSystem.selectedSceneComponent.setPickable(false);
+                }
+                else {
+                    Context.getInstance().sceneManager.addScene(SceneSystem.selectedSceneComponent.scene);
+                    SceneSystem.selectedSceneComponent.setPickable(true);
+                }
+    }
+    });                              createTransformTable();
     }
 
-    public void populateTables(SceneComponent component)
+    public void createButtonGroup(){
+        settingsButtonGroup = new ButtonGroup<VisRadioButton>();
+        flowGroup = new FlowGroup(true,5);
+
+
+        wireFrameButton = new VisRadioButton("Draw Wireframe");
+        pointsButton = new VisRadioButton("Draw Points");
+        drawBoundsButton = new VisRadioButton("Draw Bounds");
+        drawTextured = new VisRadioButton("Draw Textured");
+        collapseAll = new VisRadioButton("Collapse All");
+        expandAll = new VisRadioButton("Expand All");
+
+//        settingsButtonGroup.add(wireFrameButton);
+//        settingsButtonGroup.add(pointsButton);
+//        settingsButtonGroup.add(drawBoundsButton);
+//        settingsButtonGroup.add(drawTextured);
+
+        flowGroup.addActor(setVisibleCheckBox);
+        flowGroup.addActor(wireFrameButton);
+        flowGroup.addActor(pointsButton);
+        flowGroup.addActor(drawBoundsButton);
+
+
+
+
+
+
+        root.add(flowGroup).expandX().fillX().row();
+
+        root.row();
+        root.add(new Separator()).expandX().fillX().padTop(10).padBottom(10).colspan(2).row();
+    }
+
+    public void createButtonListeners(){
+
+        wireFrameButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (selectedComponent==null)   return;
+                selectedComponent.drawWireframe = wireFrameButton.isChecked();
+                System.out.println("wireframe flag: " + selectedComponent.drawWireframe);
+            }
+        });
+        pointsButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (selectedComponent==null)   return;
+
+                selectedComponent.drawPoints = pointsButton.isChecked();
+                System.out.println("points flag: " + selectedComponent.drawPoints);
+            }
+        });
+        drawBoundsButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (selectedComponent==null)   return;
+
+                selectedComponent.drawBounds = drawBoundsButton.isChecked();
+                System.out.println("bounds flag: " + selectedComponent.drawBounds);
+            }
+        });
+        drawTextured.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (selectedComponent==null)   return;
+
+                selectedComponent.drawTextured = drawTextured.isChecked();
+            }
+        });
+    }
+
+    public void populateUI(SceneComponent component)
     {
         populateMeshTable(component);
         populateMaterialsTable(component);
         populateTransformTable(component);
         setTransformTableListener(component);
+
+        wireFrameButton.setChecked(component.drawWireframe);
+        pointsButton.setChecked(component.drawPoints);
+        drawBoundsButton.setChecked(component.drawBounds);
+        drawTextured.setChecked(component.drawTextured);
+        setVisibleCheckBox.setChecked(component.visible);
+
     }
 
     public void populateMeshTable(SceneComponent component) {
-        int count = 0;
+        count = 0;
         int totalVertices = 0;
         int totalIndices = 0;
         meshWindow.clear();
@@ -194,7 +340,36 @@ align(Align.center);
             VisTable table = new VisTable();
             table.align(Align.topLeft);
             VisTextButton button = new VisTextButton("Mesh " + count);
-            CollapsibleWidget widget = new CollapsibleWidget(table, true);
+            VisCheckBox checkBox = new VisCheckBox("Visible");
+            CollapsibleWidget widget = new CollapsibleWidget(table, true) {
+                @Override
+                public void setCollapsed(boolean collapse) {
+                    super.setCollapsed(collapse);
+
+
+                    if (collapse) {
+
+
+
+
+
+                    } else {
+
+
+                    }
+
+                }
+
+                int index = count;
+                @Override
+                public void act(float delta) {
+                    super.act(delta);
+
+
+
+
+                }
+            };
             collapsibleWidgets.add(widget);
             meshWindow.add(button).pad(5).left().row();
             VisLabel label = new VisLabel("Mesh " + count);
@@ -212,11 +387,25 @@ align(Align.center);
             meshWindow.add(widget).expandX().fillX().growX().row();
 
             button.addListener(new ClickListener() {
+                int index = count;
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     widget.setCollapsed(!widget.isCollapsed());
+                    Mesh mesh = component.meshes.get(index-1);
+                    MeshInfo meshInfo = component.meshInfos.get(index-1);
+
+                    if (widget.isCollapsed()) {
+                        selectedMeshInfo = null;
+                        selectedMesh = null;
+                    } else {
+                        selectedMeshInfo = meshInfo;
+                        selectedMesh = mesh;
+
+                    }
+                    Log.info("Mesh " + index + " clicked, selected mesh: " + selectedMesh + ", selected mesh info: " + selectedMeshInfo);
                 }
             });
+
         }
         totalVerticesLabel.setText("Total Vertices: " + totalVertices);
         totalIndicesLabel.setText("Total Indices: " + totalIndices);
@@ -267,7 +456,7 @@ align(Align.center);
             material.get(textureAttributes, TextureAttribute.Diffuse|TextureAttribute.Normal| TextureAttribute.Specular);
 
             for (Attribute attribute : colorAttributes) {
-                Log.info("Color Attribute: " + attribute.toString());
+
                 if (attribute instanceof ColorAttribute) {
                     ColorAttribute colorAttribute = (ColorAttribute) attribute;
                     VisLabel label = new VisLabel(colorAttribute.toString());
@@ -277,7 +466,7 @@ align(Align.center);
                 }
             }
             for (Attribute attribute : textureAttributes) {
-                Log.info("Texture Attribute: " + attribute.toString());
+
                 Texture texture = ((TextureAttribute)attribute).textureDescription.texture;
                 TextureAttribute textureAttribute = (TextureAttribute) attribute;
                 VisImage image = new VisImage(texture);
@@ -414,6 +603,12 @@ align(Align.center);
                     SceneComponent sceneComponent = SceneSystem.selectedSceneComponent;
                     if (Context.getInstance().gizmoSystem.translateTool.state!= TranslateTool.TransformState.NONE&&transformWidget.isCollapsed())
                         transformWidget.setCollapsed(false);
+                    if (Context.getInstance().gizmoSystem.rotateTool.rotationState!= RotateTool.RotationState.NONE&&transformWidget.isCollapsed())
+                        transformWidget.setCollapsed(false);
+                    if (Context.getInstance().gizmoSystem.scaleTool.scaleState!= ScaleTool.ScaleState.NONE&&transformWidget.isCollapsed()){
+                        transformWidget.setCollapsed(false);
+                    }
+
 
                     getTitleLabel().setText("Selection: "+sceneComponent.id);
 
@@ -423,13 +618,14 @@ align(Align.center);
                     Vector3 scale = new Vector3();
                     transform.getTranslation(translation);
                     transform.getRotation(rotation);
+
                     transform.getScale(scale);
                     xField.setText(String.valueOf(translation.x));
                     yField.setText(String.valueOf(translation.y));
                     zField.setText(String.valueOf(translation.z));
-                    xRotField.setText(String.valueOf(rotation.x));
-                    yRotField.setText(String.valueOf(rotation.y));
-                    zRotField.setText(String.valueOf(rotation.z));
+                    xRotField.setText(String.valueOf(rotation.getPitch()));
+                    yRotField.setText(String.valueOf(rotation.getRoll()));
+                    zRotField.setText(String.valueOf(rotation.getYaw()));
                     xScaleField.setText(String.valueOf(scale.x));
                     yScaleField.setText(String.valueOf(scale.y));
                     zScaleField.setText(String.valueOf(scale.z));
@@ -505,6 +701,59 @@ align(Align.center);
                 component.transform.idt();
             }
         });
+    }
+
+    public void deselectComponent(){
+        selectedComponent = null;
+        setVisibleCheckBox.setDisabled(true);
+        drawBoundsButton.setDisabled(true);
+        drawTextured.setDisabled(true);
+        wireFrameButton.setDisabled(true);
+        drawTextured.setDisabled(true);
+        pointsButton.setDisabled(true);
+
+//        setVisibleCheckBox.setChecked(false);
+//        drawBoundsButton.setChecked(false);
+//        drawTextured.setChecked(false);
+//        wireFrameButton.setChecked(false);
+//        drawTextured.setChecked(false);
+//        pointsButton.setChecked(false);
+
+        materialsButton.setDisabled(true);
+        lightButton.setDisabled(true);
+        transformButton.setDisabled(true);
+        meshButton.setDisabled(true);
+
+        collapseAll();
+
+    }
+    public void collapseAll(){
+        transformWidget.setCollapsed(true);
+        meshWidget.setCollapsed(true);
+        lightWidget.setCollapsed(true);
+        materialsWidget.setCollapsed(true);
+
+    }
+
+    public void setSelectedComponent(SceneComponent sceneComponent){
+        this.selectedComponent = sceneComponent;
+        setVisibleCheckBox.setDisabled(false);
+        drawBoundsButton.setDisabled(false);
+        drawTextured.setDisabled(false);
+        wireFrameButton.setDisabled(false);
+        drawTextured.setDisabled(false);
+        pointsButton.setDisabled(false);
+
+        materialsButton.setDisabled(false);
+        lightButton.setDisabled(false);
+        transformButton.setDisabled(false);
+        meshButton.setDisabled(false);
+
+        populateUI(sceneComponent);
+
+
+
+
     }
 }
 

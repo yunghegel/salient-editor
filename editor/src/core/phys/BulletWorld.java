@@ -21,7 +21,7 @@ public class BulletWorld implements Disposable
     private final DebugDrawer debugDrawer;
     private final btGhostPairCallback ghostPairCallback;
     private final float fixedTimeStep = 1f / 60f;
-    private final Vector3 gravity = new Vector3(0 , -5f , 0);
+    private final Vector3 gravity = new Vector3(0 , -10f , 0);
     private final Vector3 lastRayFrom = new Vector3();
     private final Vector3 lastRayTo = new Vector3();
     private final Vector3 rayColor = new Vector3(1 , 0 , 1);

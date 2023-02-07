@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
+import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
@@ -48,7 +49,11 @@ public class MaterialUtils
         pbrTextureAttribute.scaleU = 40f;
         pbrTextureAttribute.scaleV = 40f;
         Material material = new Material(pbrTextureAttribute);
-        modelInstance.materials.set(0 , material);
+        if (modelInstance.materials.size != 0) {
+            modelInstance.materials.clear();
+        }
+
+        modelInstance.materials.add(material);
     }
 
     public static void replaceTexture(Color color , ModelInstance modelInstance) {
@@ -98,8 +103,19 @@ public class MaterialUtils
 
     }
 
-    public static Material addBaseColorAttribute(Material material , Color color) {
+    public static Material addBaseColorAttribute(Material material, Color color) {
         material.set(PBRColorAttribute.createBaseColorFactor(color));
+        return material;
+    }
+
+    public static Material createGenericBDSFMateral(Color color) {
+        Material material = new Material();
+        material.set(PBRColorAttribute.createBaseColorFactor(color));
+        material.set((PBRColorAttribute.createSpecular(color)));
+        material.set((PBRColorAttribute.createDiffuse(color)));
+        material.set((PBRColorAttribute.createEmissive(color)));
+        material.set((PBRColorAttribute.createReflection(color)));
+        material.set((PBRColorAttribute.createAmbient(color)));
         return material;
     }
 

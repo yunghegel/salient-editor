@@ -1,6 +1,7 @@
 package editor.tools;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -17,12 +18,17 @@ import core.systems.GizmoSystem;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
+import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
+import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import org.lwjgl.opengl.GL40;
 import ui.tools.AbstractTool;
+import ui.widgets.RenderWidget;
+import util.MaterialUtils;
 import util.ModelUtils;
 
 public class ScaleTool extends AbstractTool implements InputProcessor
 {
+
     protected static Color COLOR_X = Color.RED;
     protected static Color COLOR_Y = Color.GREEN;
     protected static Color COLOR_Z = Color.BLUE;
@@ -30,11 +36,7 @@ public class ScaleTool extends AbstractTool implements InputProcessor
 
     public enum ScaleState
     {
-        NONE,
-        SCALE_X,
-        SCALE_Y,
-        SCALE_Z,
-        SCALE_XYZ
+        NONE, SCALE_X, SCALE_Y, SCALE_Z, SCALE_XYZ
     }
 
     private final Vector3 temp0 = new Vector3();
@@ -44,10 +46,10 @@ public class ScaleTool extends AbstractTool implements InputProcessor
 
     public ScaleState scaleState = ScaleState.NONE;
 
-    private ModelInstance xHandle;
-    private ModelInstance yHandle;
-    private ModelInstance zHandle;
-    private ModelInstance xyzHandle;
+    public ModelInstance xHandle;
+    public ModelInstance yHandle;
+    public ModelInstance zHandle;
+    public ModelInstance xyzHandle;
 
     public ModelInstance xHandleOutline;
     public ModelInstance yHandleOutline;
@@ -74,10 +76,7 @@ public class ScaleTool extends AbstractTool implements InputProcessor
     public boolean initScale = true;
     public boolean enabled = false;
 
-
-
-    public ScaleTool(SceneManager sceneManager , PerspectiveCamera camera)
-    {
+    public ScaleTool(SceneManager sceneManager , PerspectiveCamera camera) {
         this.sceneManager = sceneManager;
         this.camera = camera;
         batch = new ModelBatch();
@@ -89,15 +88,10 @@ public class ScaleTool extends AbstractTool implements InputProcessor
         Material matZ = new Material(PBRColorAttribute.createEmissive(COLOR_Z) , PBRColorAttribute.createSpecular(COLOR_Z) , PBRTextureAttribute.createBaseColorTexture(new Texture("dev_mat/BLUE.png")));
         Material matXYZ = new Material(PBRColorAttribute.createEmissive(COLOR_XYZ) , PBRColorAttribute.createSpecular(COLOR_XYZ) , PBRTextureAttribute.createBaseColorTexture(new Texture("dev_mat/CYAN.png")));
 
-        Model xPlaneHandleModel = ModelUtils.createArrowStub(matX,
-                                                             Vector3.Zero, new Vector3(1, 0, 0));
-        Model yPlaneHandleModel = ModelUtils.createArrowStub(matY,
-                                                              Vector3.Zero, new Vector3(0, 1, 0));
-        Model zPlaneHandleModel = ModelUtils.createArrowStub(matZ,
-                                                              Vector3.Zero, new Vector3(0, 0, 1));
-        Model xyzPlaneHandleModel = modelBuilder.createBox(0.16f, 0.16f, 0.16f,
-                                                           matXYZ,
-                                                           VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal);
+        Model xPlaneHandleModel = ModelUtils.createArrowStub(MaterialUtils.createGenericBDSFMateral(COLOR_X) , Vector3.Zero , new Vector3(1 , 0 , 0));
+        Model yPlaneHandleModel = ModelUtils.createArrowStub(MaterialUtils.createGenericBDSFMateral(COLOR_Y) , Vector3.Zero , new Vector3(0 , 1 , 0));
+        Model zPlaneHandleModel = ModelUtils.createArrowStub(MaterialUtils.createGenericBDSFMateral(COLOR_Z) , Vector3.Zero , new Vector3(0 , 0 , 1));
+        Model xyzPlaneHandleModel = modelBuilder.createBox(0.16f , 0.16f , 0.16f , matXYZ , VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal| VertexAttributes.Usage.TextureCoordinates);
         xHandle = new ModelInstance(xPlaneHandleModel);
         yHandle = new ModelInstance(yPlaneHandleModel);
         zHandle = new ModelInstance(zPlaneHandleModel);
@@ -107,28 +101,34 @@ public class ScaleTool extends AbstractTool implements InputProcessor
         Model zHandleCopy;
         Model xyzHandleCopy;
 
-        xHandleCopy = ModelUtils.createArrowStub(matX,
-                                                 Vector3.Zero, new Vector3(1, 0, 0));
-        yHandleCopy = ModelUtils.createArrowStub(matY,
-                                                 Vector3.Zero, new Vector3(0, 1, 0));
-        zHandleCopy = ModelUtils.createArrowStub(matZ,
-                                                 Vector3.Zero, new Vector3(0, 0, 1));
-        xyzHandleCopy = modelBuilder.createBox(0.16f, 0.16f, 0.16f,
-                                               matXYZ,
-                                               VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal);
+        xHandleCopy = ModelUtils.createArrowStub(MaterialUtils.createGenericBDSFMateral(COLOR_X) , Vector3.Zero , new Vector3(1 , 0 , 0));
+        yHandleCopy = ModelUtils.createArrowStub(MaterialUtils.createGenericBDSFMateral(COLOR_Y) , Vector3.Zero , new Vector3(0 , 1 , 0));
+        zHandleCopy = ModelUtils.createArrowStub(MaterialUtils.createGenericBDSFMateral(COLOR_Z) , Vector3.Zero , new Vector3(0 , 0 , 1));
+        xyzHandleCopy = modelBuilder.createBox(0.16f , 0.16f , 0.16f , MaterialUtils.createGenericBDSFMateral(COLOR_XYZ) , VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
 
-//        utils.ModelUtils.createOutlineModel(xHandleCopy , Color.WHITE , 0.02f);
-//        utils.ModelUtils.createOutlineModel(yHandleCopy , Color.WHITE , 0.02f);
-//        utils.ModelUtils.createOutlineModel(zHandleCopy , Color.WHITE , 0.02f);
-//        utils.ModelUtils.createOutlineModel(xyzHandleCopy , Color.WHITE , 0.02f);
+        //        utils.ModelUtils.createOutlineModel(xHandleCopy , Color.WHITE , 0.02f);
+        //        utils.ModelUtils.createOutlineModel(yHandleCopy , Color.WHITE , 0.02f);
+        //        utils.ModelUtils.createOutlineModel(zHandleCopy , Color.WHITE , 0.02f);
+        //        utils.ModelUtils.createOutlineModel(xyzHandleCopy , Color.WHITE , 0.02f);
 
         //scale outline
-        float alpha = 0.95f;
-        ModelUtils.createAlphaAttribute(xHandleCopy, alpha);
-        ModelUtils.createAlphaAttribute(yHandleCopy, alpha);
-        ModelUtils.createAlphaAttribute(zHandleCopy, alpha);
-        ModelUtils.createAlphaAttribute(xyzHandleCopy, alpha);
+        float alpha = 0.8f;
+//        ModelUtils.createAlphaAttribute(xHandleCopy , alpha);
+//        ModelUtils.createAlphaAttribute(yHandleCopy , alpha);
+//        ModelUtils.createAlphaAttribute(zHandleCopy , alpha);
+//        ModelUtils.createAlphaAttribute(xyzHandleCopy , alpha);
 
+
+        xHandle.materials.add(MaterialUtils.createGenericBDSFMateral(Color.RED));
+        yHandle.materials.add(MaterialUtils.createGenericBDSFMateral(Color.GREEN));
+        zHandle.materials.add(MaterialUtils.createGenericBDSFMateral(Color.BLUE));
+        xyzHandle.materials.add(MaterialUtils.createGenericBDSFMateral(Color.CYAN));
+
+        alpha =1;
+        xHandle.materials.get(0).set(PBRColorAttribute.createBaseColorFactor(new Color(1,0,0,alpha)));
+        yHandle.materials.get(0).set(PBRColorAttribute.createBaseColorFactor(new Color(0,1,0,alpha)));
+        zHandle.materials.get(0).set(PBRColorAttribute.createBaseColorFactor(new Color(0,0,1,alpha)));
+        xyzHandle.materials.get(0).set(PBRColorAttribute.createBaseColorFactor(new Color(0,1,1,alpha)));
         float scale = 1.1f;
 
         xHandleOutline = new ModelInstance(xHandleCopy);
@@ -136,103 +136,98 @@ public class ScaleTool extends AbstractTool implements InputProcessor
         zHandleOutline = new ModelInstance(zHandleCopy);
         xyzPlaneHandleOutline = new ModelInstance(xyzHandleCopy);
 
-        xHandleOutline.transform.scale(scale, scale, scale);
-        yHandleOutline.transform.scale(scale, scale, scale);
-        zHandleOutline.transform.scale(scale, scale, scale);
-        xyzPlaneHandleOutline.transform.scale(scale, scale, scale);
+        xHandleOutline.transform.scale(scale , scale , scale);
+        yHandleOutline.transform.scale(scale , scale , scale);
+        zHandleOutline.transform.scale(scale , scale , scale);
+        xyzPlaneHandleOutline.transform.scale(scale , scale , scale);
     }
 
-    public void setSelectedComponent(SceneComponent sceneComponent)
-    {
+    public void setSelectedComponent(SceneComponent sceneComponent) {
         this.selectedComponent = sceneComponent;
     }
 
-    public void update(){
+    public void update() {
         double dst;
         scaleHandle(1);
-        dst = selectedComponent.center.dst(Context.getInstance().camera.position);
-        dst = Math.sqrt(dst);
+        if (selectedComponent!=null) {
+            dst = selectedComponent.center.dst(Context.getInstance().camera.position);
+            dst = Math.sqrt(dst);
 
-        xHandle.transform.setTranslation(selectedComponent.center);
-        yHandle.transform.setTranslation(selectedComponent.center);
-        zHandle.transform.setTranslation(selectedComponent.center);
-        xyzHandle.transform.setTranslation(selectedComponent.center);
-        xHandle.transform.scl((float) dst);
-        yHandle.transform.scl((float) dst);
-        zHandle.transform.scl((float) dst);
-        xyzHandle.transform.scl((float) dst);
+            xHandle.transform.setTranslation(selectedComponent.center);
+            yHandle.transform.setTranslation(selectedComponent.center);
+            zHandle.transform.setTranslation(selectedComponent.center);
+            xyzHandle.transform.setTranslation(selectedComponent.center);
+            xHandle.transform.scl((float) dst);
+            yHandle.transform.scl((float) dst);
+            zHandle.transform.scl((float) dst);
+            xyzHandle.transform.scl((float) dst);
 
-        xHandleBoundingBox = new BoundingBox();
-        yHandleBoundingBox = new BoundingBox();
-        zHandleBoundingBox = new BoundingBox();
-        xyzHandleBoundingBox = new BoundingBox();
+            xHandleBoundingBox = new BoundingBox();
+            yHandleBoundingBox = new BoundingBox();
+            zHandleBoundingBox = new BoundingBox();
+            xyzHandleBoundingBox = new BoundingBox();
 
-        xHandle.calculateBoundingBox(xHandleBoundingBox);
-        yHandle.calculateBoundingBox(yHandleBoundingBox);
-        zHandle.calculateBoundingBox(zHandleBoundingBox);
-        xyzHandle.calculateBoundingBox(xyzHandleBoundingBox);
+            xHandle.calculateBoundingBox(xHandleBoundingBox);
+            yHandle.calculateBoundingBox(yHandleBoundingBox);
+            zHandle.calculateBoundingBox(zHandleBoundingBox);
+            xyzHandle.calculateBoundingBox(xyzHandleBoundingBox);
 
-        xHandleBoundingBox.mul(xHandle.transform);
-        yHandleBoundingBox.mul(yHandle.transform);
-        zHandleBoundingBox.mul(zHandle.transform);
-        xyzHandleBoundingBox.mul(xyzHandle.transform);
+            xHandleBoundingBox.mul(xHandle.transform);
+            yHandleBoundingBox.mul(yHandle.transform);
+            zHandleBoundingBox.mul(zHandle.transform);
+            xyzHandleBoundingBox.mul(xyzHandle.transform);
 
-        xHandleOutline.transform.set(xHandle.transform);
-        yHandleOutline.transform.set(yHandle.transform);
-        zHandleOutline.transform.set(zHandle.transform);
-        xyzPlaneHandleOutline.transform.set(xyzHandle.transform);
-        xHandleOutline.transform.scale(1.005f, 1.5f, 1.5f);
-        yHandleOutline.transform.scale(1.5f, 1.005f, 1.5f);
-        zHandleOutline.transform.scale(1.5f, 1.5f, 1.005f);
-        xyzPlaneHandleOutline.transform.scale(1.1f, 1.1f, 1.1f);
+            xHandleOutline.transform.set(xHandle.transform);
+            yHandleOutline.transform.set(yHandle.transform);
+            zHandleOutline.transform.set(zHandle.transform);
+            xyzPlaneHandleOutline.transform.set(xyzHandle.transform);
+            xHandleOutline.transform.scale(1.005f , 1.5f , 1.5f);
+            yHandleOutline.transform.scale(1.5f , 1.005f , 1.5f);
+            zHandleOutline.transform.scale(1.5f , 1.5f , 1.005f);
+            xyzPlaneHandleOutline.transform.scale(1.1f , 1.1f , 1.1f);
 
-        xyzPlaneHandleOutline.transform.set(xyzHandle.transform);
-
+            xyzPlaneHandleOutline.transform.set(xyzHandle.transform);
+        }
     }
 
-    public void render(){
+    public void render() {
         batch.begin(sceneManager.camera);
-        if (GizmoSystem.scaleToolEnabled)
-        {
+        if (GizmoSystem.scaleToolEnabled) {
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
-            batch.render(xHandle, sceneManager.environment);
-            batch.render(yHandle, sceneManager.environment);
-            batch.render(zHandle, sceneManager.environment);
-            batch.render(xyzHandle, sceneManager.environment);
+            batch.render(xHandle , sceneManager.environment);
+            batch.render(yHandle , sceneManager.environment);
+            batch.render(zHandle , sceneManager.environment);
+            batch.render(xyzHandle , sceneManager.environment);
         }
-        if (scaleState== ScaleState.SCALE_X)
-        {
+        GL40.glCullFace(GL40.GL_FRONT);
+        if (scaleState == ScaleState.SCALE_X) {
             //cull front faces
-//            GL40.glEnable(GL40.GL_CULL_FACE);
-//            GL40.glCullFace(GL40.GL_FRONT);
+            //            GL40.glEnable(GL40.GL_CULL_FACE);
+            //            GL40.glCullFace(GL40.GL_FRONT);
 
-            batch.render(xHandleOutline, sceneManager.environment);
+            //batch.render(xHandleOutline , sceneManager.environment);
         }
-        else if (scaleState== ScaleState.SCALE_Y)
-        {
+        else if (scaleState == ScaleState.SCALE_Y) {
             //cull front faces
-//            GL40.glEnable(GL40.GL_CULL_FACE);
-//            GL40.glCullFace(GL40.GL_FRONT);
+            //            GL40.glEnable(GL40.GL_CULL_FACE);
+            //            GL40.glCullFace(GL40.GL_FRONT);
 
-            batch.render(yHandleOutline, sceneManager.environment);
+           // batch.render(yHandleOutline , sceneManager.environment);
         }
-        else if (scaleState== ScaleState.SCALE_Z)
-        {
+        else if (scaleState == ScaleState.SCALE_Z) {
             //cull front faces
-//            GL40.glEnable(GL40.GL_CULL_FACE);
-//            GL40.glCullFace(GL40.GL_FRONT);
-            batch.render(zHandleOutline, sceneManager.environment);
+            //            GL40.glEnable(GL40.GL_CULL_FACE);
+            //            GL40.glCullFace(GL40.GL_FRONT);
+           // batch.render(zHandleOutline , sceneManager.environment);
         }
-        else if (scaleState== ScaleState.SCALE_XYZ)
-        {
+        else if (scaleState == ScaleState.SCALE_XYZ) {
             //cull front faces
-//            GL40.glEnable(GL40.GL_CULL_FACE);
-//            GL40.glCullFace(GL40.GL_FRONT);
-            batch.render(xyzPlaneHandleOutline, sceneManager.environment);
+            //            GL40.glEnable(GL40.GL_CULL_FACE);
+            //            GL40.glCullFace(GL40.GL_FRONT);
+           // batch.render(xyzPlaneHandleOutline , sceneManager.environment);
         }
         //disable culling
         GL40.glCullFace(GL40.GL_BACK);
-
 
         batch.end();
     }
@@ -259,6 +254,7 @@ public class ScaleTool extends AbstractTool implements InputProcessor
 
     @Override
     public boolean touchUp(int screenX , int screenY , int pointer , int button) {
+        scaleState = ScaleState.NONE;
         return false;
     }
 
@@ -278,39 +274,36 @@ public class ScaleTool extends AbstractTool implements InputProcessor
         if (initScale) {
             initScale = false;
             lastPos.set(rayEnd);
+
         }
 
         boolean modified = false;
-        if (scaleState==ScaleState.SCALE_X)
-        {
-            vec.set(1+rayEnd.x - lastPos.x, 1, 1);
+        if (scaleState == ScaleState.SCALE_X) {
+            vec.set(1 + rayEnd.x - lastPos.x , 1 , 1);
             modified = true;
         }
 
-        else if (scaleState==ScaleState.SCALE_Y)
-        {
-            vec.set(1, 1+rayEnd.y - lastPos.y, 1);
+        else if (scaleState == ScaleState.SCALE_Y) {
+            vec.set(1 , 1 + rayEnd.y - lastPos.y , 1);
             modified = true;
         }
-        else if (scaleState==ScaleState.SCALE_Z)
-        {
-            vec.set(1, 1, 1+rayEnd.z - lastPos.z);
+        else if (scaleState == ScaleState.SCALE_Z) {
+            vec.set(1 , 1 , 1 + rayEnd.z - lastPos.z);
             modified = true;
         }
-        else if (scaleState==ScaleState.SCALE_XYZ)
-        {
-            vec.set(1+rayEnd.x - lastPos.x, 1+rayEnd.y - lastPos.y, 1+rayEnd.z - lastPos.z);
-            float avg = (vec.x+vec.y+vec.z)/3;
-            vec.set(avg, avg, avg);
+        else if (scaleState == ScaleState.SCALE_XYZ) {
+            vec.set(1 + rayEnd.x - lastPos.x , 1 + rayEnd.y - lastPos.y , 1 + rayEnd.z - lastPos.z);
+            float avg = ( vec.x + vec.y + vec.z ) / 3;
+            vec.set(avg , avg , avg);
             modified = true;
         }
 
         //ensure not 0
-        if (vec.x==0)
-            vec.x = 1;
+        if (vec.x == 0) vec.x = 1;
 
         if (modified) {
-            selectedComponent.scene.modelInstance.transform.scl(vec.x, vec.y, vec.z);
+            selectedComponent.scene.modelInstance.transform.scl(vec.x , vec.y , vec.z);
+
 
         }
 
@@ -328,12 +321,21 @@ public class ScaleTool extends AbstractTool implements InputProcessor
         return false;
     }
 
+    InputMultiplexer inputMultiplexer = new InputMultiplexer();
+    {
+
+        inputMultiplexer.addProcessor(this);
+        inputMultiplexer.addProcessor(Context.getInstance().stage);
+        inputMultiplexer.addProcessor(Context.getInstance().cameraController);
+    }
+
     @Override
     public void enable() {
+        Gdx.input.setInputProcessor(inputMultiplexer);
         Context.getInstance().inputMultiplexer.addProcessor(this);
+        //RenderWidget.renderWidgetMultiplexer.addProcessor(this);
         update();
         enabled = true;
-
 
         sceneManager.getRenderableProviders().add(xHandle);
         sceneManager.getRenderableProviders().add(yHandle);
@@ -343,7 +345,10 @@ public class ScaleTool extends AbstractTool implements InputProcessor
 
     @Override
     public void disable() {
+        Gdx.input.setInputProcessor(Context.getInstance().inputMultiplexer);
+
         Context.getInstance().inputMultiplexer.removeProcessor(this);
+        //RenderWidget.renderWidgetMultiplexer.removeProcessor(this);
         scaleState = ScaleState.NONE;
         enabled = false;
         sceneManager.getRenderableProviders().removeValue(xHandle , true);
