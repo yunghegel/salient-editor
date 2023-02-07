@@ -1,0 +1,78 @@
+[
+  [
+    "images",
+    {
+      "class": "com.badlogic.gdx.graphics.Texture",
+      "id": "red_swatch",
+      "path": "dev_mat/RED.png"
+    },
+    {
+      "class": "com.badlogic.gdx.graphics.Texture",
+      "id": "green_swatch",
+      "path": "dev_mat/GREEN.png"
+    },
+    {
+      "class": "com.badlogic.gdx.graphics.Texture",
+      "id": "blue_swatch",
+      "path": "dev_mat/BLUE.png"
+    },
+    {
+      "class": "com.badlogic.gdx.graphics.Texture",
+      "id": "red_swatch",
+      "path": "dev_mat/RED.png"
+    },
+    {
+      "class": "com.badlogic.gdx.graphics.Texture",
+      "id": "green_swatch",
+      "path": "dev_mat/GREEN.png"
+    },
+    {
+      "class": "com.badlogic.gdx.graphics.Texture",
+      "id": "blue_swatch",
+      "path": "dev_mat/BLUE.png"
+    }
+  ],
+  [
+    "models",
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "map_scene",
+      "path": "models/transmission_test/TransmissionTest.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "player_scene",
+      "path": "models/Player.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "rigged_model_scene",
+      "path": "models/RiggedFigure.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "crate_scene",
+      "path": "models/crate.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "map_scene",
+      "path": "models/transmission_test/TransmissionTest.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "player_scene",
+      "path": "models/Player.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "rigged_model_scene",
+      "path": "models/RiggedFigure.gltf"
+    },
+    {
+      "class": "net.mgsx.gltf.scene3d.scene.SceneAsset",
+      "id": "crate_scene",
+      "path": "models/crate.gltf"
+    }
+  ]
+]
