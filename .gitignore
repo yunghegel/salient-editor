@@ -4,3 +4,4 @@
 /editor/build/classes/java/main/
 /engine/build/
 /engine/build/classes/java/main/
+*.log
