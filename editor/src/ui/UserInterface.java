@@ -573,9 +573,9 @@ public class UserInterface
     private void createPanes() {
         middleSplitPane = new VisSplitPane(leftTable , middleTable , false);
         multiSplitPane = new VisSplitPane(middleSplitPane , rightTable , false);
-        multiSplitPane.setSplitAmount(0.85f);
+        multiSplitPane.setSplitAmount(0.8f);
         multiSplitPane.setMaxSplitAmount(0.85f);
-        multiSplitPane.setMinSplitAmount(0.845f);
+        multiSplitPane.setMinSplitAmount(0.8f);
 
         middleSplitPane.pack();
         multiSplitPane.pack();

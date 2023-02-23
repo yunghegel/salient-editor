@@ -280,6 +280,8 @@ public class Context
     public IntermediateRenderingSystem intermediateRenderingSystem;
     public WireframeRenderSystem wireframeRenderSystem;
 
+    public MeshManipulationSystem meshManipulationSystem;
+
     private void createECS() {
         int ecs = Perf.start("create_ECS");
 
@@ -292,6 +294,7 @@ public class Context
         objectPickingSystem = new ObjectPickingSystem();
         intermediateRenderingSystem = new IntermediateRenderingSystem();
         wireframeRenderSystem = new WireframeRenderSystem();
+        meshManipulationSystem = new MeshManipulationSystem();
         Perf.end(systemsCreate);
 
         int assignContext = Perf.start("assign_system_context");
@@ -303,6 +306,7 @@ public class Context
         objectPickingSystem.setContext(this);
         intermediateRenderingSystem.setContext(this);
         wireframeRenderSystem.setContext(this);
+        meshManipulationSystem.setContext(this);
         Perf.end(assignContext);
 
         int createEngine = Perf.start("create_engine");
@@ -318,6 +322,7 @@ public class Context
         engine.addSystem(objectPickingSystem);
         engine.addSystem(intermediateRenderingSystem);
         engine.addSystem(wireframeRenderSystem);
+        engine.addSystem(meshManipulationSystem);
         Perf.end(addSystems);
     }
 

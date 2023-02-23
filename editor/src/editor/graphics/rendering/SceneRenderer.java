@@ -324,6 +324,7 @@ public class SceneRenderer implements Renderer
         context.gizmoSystem.scaleTool.render();
         context.gizmoSystem.rotateTool.render();
         context.wireframeRenderSystem.render();
+        context.meshManipulationSystem.render();
         Gdx.gl.glEnable(Gdx.gl20.GL_DEPTH_TEST);
     }
 

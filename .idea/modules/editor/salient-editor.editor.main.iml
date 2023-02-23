@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4">
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
     <content url="file://$MODULE_DIR$/../../../editor/src">
       <sourceFolder url="file://$MODULE_DIR$/../../../editor/src" isTestSource="false" />
     </content>
+    <orderEntry type="jdk" jdkName="17" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Gradle: com.badlogicgames.gdx:gdx:1.11.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.badlogicgames.gdx:gdx-backend-lwjgl3:1.11.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.kotcrab.vis:vis-ui:1.5.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.mgsx-dev.gdx-gltf:gltf:2.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.crashinvaders.vfx:gdx-vfx-core:0.5.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.crashinvaders.vfx:gdx-vfx-effects:0.5.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.badlogicgames.ashley:ashley:1.7.4" level="project" />
+    <orderEntry type="library" name="Gradle: com.badlogicgames.gdx:gdx-freetype:1.11.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.strongjoshua:libgdx-inGameConsole:1.0.0" level="project" />
+    <orderEntry type="module" module-name="salient-editor.engine.main" />
+    <orderEntry type="library" name="Gradle: com.badlogicgames.gdx:gdx-bullet:1.11.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-opengl:3.3.1" level="project" />
   </component>
 </module>

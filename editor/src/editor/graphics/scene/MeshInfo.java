@@ -6,15 +6,19 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.model.NodePart;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.Ray;
+import com.badlogic.gdx.math.collision.Sphere;
 import com.badlogic.gdx.utils.Array;
+import editor.Context;
 import tests.GeometryTest;
 
 public class MeshInfo
 {
 
-    Mesh mesh;
+    public Mesh mesh;
 
     VertexAttributes attributes;
     VertexAttribute positionAttribute;
@@ -332,6 +336,8 @@ public class MeshInfo
         return result;
     }
 
+    //set vertex to its actual position
+
     public void setModel(ModelInstance model) {
         this.model = model;
     }
@@ -370,6 +376,158 @@ public class MeshInfo
         }
         shapeRenderer.end();
     }
+
+    //method for selecting a vertex
+    public void selectVertex(float x , float y , float z) {
+        for (int i = 0; i < vertices.length; i += vertexSize) {
+            float x1 = vertices[i + offset];
+            float y1 = vertices[i + 1 + offset];
+            float z1 = vertices[i + 2 + offset];
+            if (x1 == x && y1 == y && z1 == z) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+        }
+    }
+
+    //method for selecting a triangle
+    public void selectTriangle(float x1 , float y1 , float z1 , float x2 , float y2 , float z2 , float x3 , float y3 , float z3) {
+        for (int i = 0; i < vertices.length; i += vertexSize) {
+            float x = vertices[i + offset];
+            float y = vertices[i + 1 + offset];
+            float z = vertices[i + 2 + offset];
+            if (x == x1 && y == y1 && z == z1) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+            if (x == x2 && y == y2 && z == z2) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+            if (x == x3 && y == y3 && z == z3) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+        }
+    }
+
+    //method for selecting a face
+    public void selectFace(float x1 , float y1 , float z1 , float x2 , float y2 , float z2 , float x3 , float y3 , float z3 , float x4 , float y4 , float z4) {
+        for (int i = 0; i < vertices.length; i += vertexSize) {
+            float x = vertices[i + offset];
+            float y = vertices[i + 1 + offset];
+            float z = vertices[i + 2 + offset];
+            if (x == x1 && y == y1 && z == z1) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+            if (x == x2 && y == y2 && z == z2) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+            if (x == x3 && y == y3 && z == z3) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+            if (x == x4 && y == y4 && z == z4) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+        }
+    }
+
+    //method for selecting a edge
+    public void selectEdge(float x1 , float y1 , float z1 , float x2 , float y2 , float z2) {
+        for (int i = 0; i < vertices.length; i += vertexSize) {
+            float x = vertices[i + offset];
+            float y = vertices[i + 1 + offset];
+            float z = vertices[i + 2 + offset];
+            if (x == x1 && y == y1 && z == z1) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+            if (x == x2 && y == y2 && z == z2) {
+                vertices[i + offset] = 0;
+                vertices[i + 1 + offset] = 0;
+                vertices[i + 2 + offset] = 0;
+            }
+        }
+    }
+
+    //given a ray, this method will return the closest vertex to the ray
+
+    ShapeRenderer shapeRenderer = new ShapeRenderer();
+    public Vector3 getClosestVertex(Ray ray) {
+
+        Vector3 closestVertex = new Vector3();
+        for (MeshInfo.Vertex vertex : verticesArray) {
+
+            Vector3 vertexVector = new Vector3(vertex.x, vertex.y, vertex.z);
+            Vector3 transformedVertex = new Vector3();
+            transformedVertex.set(vertex.x, vertex.y, vertex.z);
+            Matrix4 transform = new Matrix4();
+            if (model != null)
+                transform.set(model.transform);
+
+            transformedVertex.mul(transform);
+            if (Intersector.intersectRaySphere(ray, transformedVertex, .1f,null)) {
+                closestVertex = new Vector3(vertex.x, vertex.y, vertex.z);
+
+                return new Vector3(vertex.x, vertex.y, vertex.z);
+            }
+        }
+
+//        for (int i = 0; i < vertices.length; i += vertexSize) {
+//            float x = vertices[i + offset];
+//            float y = vertices[i + 1 + offset];
+//            float z = vertices[i + 2 + offset];
+//            Vector3 vertex = new Vector3(x, y, z);
+//            float distance = ray.origin.dst(vertex);
+//            Sphere sphere = new Sphere(vertex, .2f);
+//            if (Intersector.intersectRaySphere(ray, vertex, .2f,null)) {
+//                closestVertex = vertex;
+//                }
+//            }
+
+        return closestVertex;
+    }
+
+    //given a vertex, return the index of the vertex in the vertices array
+    public int getVertexIndex(Vector3 vertex) {
+        for (int i = 0; i < vertices.length; i += vertexSize) {
+            float x = vertices[i + offset];
+            float y = vertices[i + 1 + offset];
+            float z = vertices[i + 2 + offset];
+            if (x == vertex.x && y == vertex.y && z == vertex.z) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    //given a vertex, return the index in the indices array
+    public int getVertexIndexInIndices(Vector3 vertex) {
+        for (int i = 0; i < indices.length; i++) {
+            float x = vertices[indices[i] * vertexSize + offset];
+            float y = vertices[indices[i] * vertexSize + 1 + offset];
+            float z = vertices[indices[i] * vertexSize + 2 + offset];
+            if (x == vertex.x && y == vertex.y && z == vertex.z) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
 
 }
 
