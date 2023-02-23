@@ -1,6 +1,7 @@
 package editor.graphics.scene;
 
 import backend.tools.Log;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.Node;
@@ -14,6 +15,7 @@ import com.badlogic.gdx.math.collision.Sphere;
 import com.badlogic.gdx.utils.Array;
 import editor.Context;
 import tests.GeometryTest;
+import ui.widgets.RenderWidget;
 
 public class MeshInfo
 {
@@ -43,7 +45,7 @@ public class MeshInfo
     public short[] indices;
     float[] normals;
 
-    public class Triangle
+    public static class Triangle
     {
 
         public Vector3 v1;
@@ -66,7 +68,7 @@ public class MeshInfo
 
         Vector3 normal;
 
-        Triangle(int index1 , int index2 , int index3 , Vector3 v1 , Vector3 v2 , Vector3 v3) {
+        public Triangle(int index1, int index2, int index3, Vector3 v1, Vector3 v2, Vector3 v3) {
 
             this.index1 = index1;
             this.index2 = index2;
@@ -259,7 +261,7 @@ public class MeshInfo
             Vector3 v1 = new Vector3(x1 , y1 , z1);
             Vector3 v2 = new Vector3(x2 , y2 , z2);
             Vector3 v3 = new Vector3(x3 , y3 , z3);
-            MeshInfo.Triangle triangle = new MeshInfo.Triangle(x1 , y1 , z1 , x2 , y2 , z2 , x3 , y3 , z3);
+            MeshInfo.Triangle triangle = new Triangle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
             // Triangle triangle = new Triangle(index1, index2, index3, v1, v2, v3);
             triangles.add(triangle);
         }
@@ -499,6 +501,19 @@ public class MeshInfo
 //            }
 
         return closestVertex;
+    }
+
+    //given a ray, return the triangle that the ray intersects
+    public Triangle getClosestTriangle(Ray ray){
+
+        Vector3 intersection = new Vector3();
+        for (Triangle triangle: triangles) {
+            if (Intersector.intersectRayTriangle(ray, triangle.getV1().cpy().mul(model.transform), triangle.v2.cpy().mul(model.transform), triangle.v3.cpy().mul(model.transform), intersection)) {
+                return triangle;
+            }
+        }
+
+        return new Triangle(0, 0, 0, new Vector3(0, 0, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0));
     }
 
     //given a vertex, return the index of the vertex in the vertices array
